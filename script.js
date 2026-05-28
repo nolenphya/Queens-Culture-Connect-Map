@@ -3,7 +3,7 @@
 // MAP SETUP
 // =====================================================
 
-mapboxgl.accessToken = 'YOUR_MAPBOX_TOKEN';
+mapboxgl.accessToken = 'pk.eyJ1IjoiZmx1c2hpbmd0b3duaGFsbCIsImEiOiJjbWRmZHFxb2EwY2p3MmlxM3JoMmJwNDVrIn0.KDnT79yQuUeYVaqcKlmQGQ';
 
 const map = new mapboxgl.Map({
   container: 'map',
