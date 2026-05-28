@@ -1,4 +1,4 @@
-/* Global Reset */
+
 body, html {
   margin: 0;
   padding: 0;
@@ -143,6 +143,10 @@ body, html {
   margin: 0 10px 10px 10px;
 }
 
+.search-item.highlighted {
+  background-color: #f0f8ff !important; /* Light blue highlight */
+  border-left: 4px solid #007bff;
+}
 #search-input {
   width: 100%;
   box-sizing: border-box;
@@ -152,6 +156,14 @@ body, html {
   border-radius: 4px;
 }
 
+#search-results {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  background: white;
+  margin-top: 5px;
+  border-radius: 4px;
+}
 
 /* Legend Content fills the rest */
 /* This is the scrollable area */
@@ -245,7 +257,25 @@ body, html {
   overflow-y: auto;
 }
 
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
 
+.color-key {
+  width: 15px;
+  height: 15px;
+  margin-right: 8px;
+  border: 1px solid #ccc;
+  display: inline-block;
+}
+
+#legend h3 {
+  margin-top: 10px;
+  font-size: 14px;
+}
 
 
 .map-guide-content {
@@ -465,3 +495,131 @@ background: none;
   box-sizing: border-box;
 }
 
+/* Custom Floating Map Overlay for Choropleth scale */
+.custom-map-overlay {
+  position: absolute;
+  bottom: 30px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  z-index: 10;
+  font-family: Arial, Helvetica, sans-serif;
+  max-width: 200px;
+  pointer-events: auto;
+}
+
+.custom-map-overlay h4 {
+  margin: 0 0 8px 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #555;
+  letter-spacing: 0.5px;
+}
+
+.scale-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.scale-color {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 2px;
+}
+
+/* Layer Checklist Section styling */
+.layer-checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 4px 0;
+  user-select: none;
+}
+
+.layer-checkbox-container input {
+  cursor: pointer;
+  width: 15px;
+  height: 15px;
+}
+
+/* Cleanup layout elements on mobile viewports */
+@media (max-width: 640px) {
+  .custom-map-overlay {
+    bottom: 20px;
+    left: 10px;
+    padding: 8px;
+  }
+}
+
+
+.legend-section {
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+}
+
+.legend-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.legend-section-content {
+  padding-left: 18px;
+  padding-top: 10px;
+}
+
+.legend-section-content.collapsed {
+  display: none;
+}
+
+.legend-category {
+  margin-bottom: 8px;
+}
+
+.legend-category-header {
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.legend-link {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.legend-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.search-result {
+  padding: 4px 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.marker-label {
+  position: absolute;
+  top: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: rgba(255,255,255,0.8);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
