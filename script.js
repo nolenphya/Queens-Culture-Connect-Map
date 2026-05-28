@@ -550,7 +550,7 @@ function loadSubwayLayers() {
 // =====================================================
 // BUILD COMBINED LEGEND
 // =====================================================
-loadSubwayLayers();
+
 function buildCombinedLegend() {
 
   const legend =
@@ -867,6 +867,8 @@ map.on('zoom', () => {
 // =====================================================
 
 map.on('load', async () => {
+  //Load Subway Layer
+  loadSubwayLayers();
 
   const records = await fetchData();
 
