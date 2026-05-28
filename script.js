@@ -21,7 +21,7 @@ map.addControl(
 // AIRTABLE SETUP
 // =====================================================
 
-const AIRTABLE_API_KEY = 'YOUR_AIRTABLE_KEY';
+const AIRTABLE_API_KEY = 'patboskAQTJUi9FlQ.1c30c3c632cd4d7bd03cf949e50edd922425aba8dcbf0c8a6002e98db67c74a3';
 
 const BASE_ID = 'apppBx0a9hj0Z1ciw';
 const TABLE_NAME = 'tblgqyoE5TZUzQDKw';
@@ -33,8 +33,8 @@ const AIRTABLE_URL =
 // ARTIST AIRTABLE
 // =====================================================
 
-const ARTIST_BASE_ID = 'YOUR_ARTIST_BASE';
-const ARTIST_TABLE = 'YOUR_ARTIST_TABLE';
+const ARTIST_BASE_ID = 'apppBx0a9hj0Z1ciw';
+const ARTIST_TABLE = 'tbl9OiPT8QI8ss20e';
 
 const ARTIST_URL =
   `https://api.airtable.com/v0/${ARTIST_BASE_ID}/${ARTIST_TABLE}`;
@@ -293,7 +293,7 @@ async function loadArtistLayer() {
   });
 
   const response =
-    await fetch('queens_nta.geojson');
+    await fetch('queens_neighborhoods.geojson');
 
   const geojson =
     await response.json();
