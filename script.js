@@ -41,6 +41,9 @@ let visibleNeighborhoods = new Set();
 
 const neighborhoodCounts = {}; // populated later
 
+const BASE_SOFTR_DIRECTORY =
+  "https://elwanda52071.softr.app/artists";
+
 // =====================================================
 // ICON MAP
 // =====================================================
@@ -64,36 +67,37 @@ const iconMap = {
 // FETCH AIRTABLE DATA
 // =====================================================
 
-async function fetchData() {
+async function fetchArtistData() {
 
-  const filterFormula = encodeURIComponent("{Approved}=TRUE()");
-  const viewName = encodeURIComponent("main");
+  const ARTIST_BASE_ID = 'YOUR_ARTIST_BASE';
+  const ARTIST_TABLE = 'YOUR_ARTIST_TABLE';
 
-  let allRecords = [];
+  const ARTIST_URL =
+    `https://api.airtable.com/v0/${ARTIST_BASE_ID}/${ARTIST_TABLE}`;
+
+  let records = [];
   let offset = null;
 
   do {
 
-    const fetchUrl =
-      `${AIRTABLE_URL}?view=${viewName}&filterByFormula=${filterFormula}${
-        offset ? `&offset=${offset}` : ''
-      }`;
-
-    const res = await fetch(fetchUrl, {
-      headers: {
-        Authorization: `Bearer ${AIRTABLE_API_KEY}`
+    const res = await fetch(
+      `${ARTIST_URL}${offset ? `?offset=${offset}` : ''}`,
+      {
+        headers: {
+          Authorization: `Bearer ${AIRTABLE_API_KEY}`
+        }
       }
-    });
+    );
 
     const data = await res.json();
 
-    allRecords = allRecords.concat(data.records || []);
+    records = records.concat(data.records || []);
 
     offset = data.offset || null;
 
   } while (offset);
 
-  return allRecords;
+  return records.map(r => r.fields);
 }
 
 // =====================================================
@@ -207,67 +211,172 @@ function createMarkers(data) {
 
 async function loadArtistLayer() {
 
-  const response = await fetch('queens_neighborhoods.geojson');
+  // =====================================
+  // FETCH ARTISTS
+  // =====================================
+
+  const artists = await fetchArtistData();
+
+  // =====================================
+  // BUILD COUNTS
+  // =====================================
+
+  artists.forEach(artist => {
+
+    const neighborhood =
+      artist.Neighborhood?.trim();
+
+    if (!neighborhood) return;
+
+    if (!neighborhoodCounts[neighborhood]) {
+      neighborhoodCounts[neighborhood] = 0;
+    }
+
+    neighborhoodCounts[neighborhood]++;
+  });
+
+  // =====================================
+  // LOAD NTA GEOJSON
+  // =====================================
+
+  const response = await fetch('queens_nta.geojson');
 
   const geojson = await response.json();
 
+  // =====================================
+  // INJECT COUNTS
+  // =====================================
+
   geojson.features.forEach(feature => {
 
-    const nta = feature.properties.ntaname;
+    const nta =
+      feature.properties.ntaname?.trim();
 
-    const count = neighborhoodCounts[nta] || 0;
+    const count =
+      neighborhoodCounts[nta] || 0;
 
     feature.properties.artist_count = count;
 
     visibleNeighborhoods.add(nta);
   });
 
+  // =====================================
+  // SOURCE
+  // =====================================
+
   map.addSource('artists-nta', {
     type: 'geojson',
     data: geojson
   });
 
+  // =====================================
+  // FILL LAYER
+  // =====================================
+
   map.addLayer({
     id: 'artist-fill-layer',
     type: 'fill',
     source: 'artists-nta',
+
     paint: {
       'fill-color': [
         'interpolate',
         ['linear'],
         ['get', 'artist_count'],
-        0, '#f5f5f5',
-        5, '#cccccc',
-        10, '#969696',
-        15, '#525252'
+
+        0, '#f7fbff',
+        1, '#deebf7',
+        3, '#c6dbef',
+        5, '#9ecae1',
+        8, '#6baed6',
+        12, '#4292c6',
+        16, '#2171b5',
+        20, '#08519c',
+        30, '#08306b'
       ],
+
       'fill-opacity': 0.75
     }
   });
+
+  // =====================================
+  // OUTLINES
+  // =====================================
 
   map.addLayer({
     id: 'artist-outline-layer',
     type: 'line',
     source: 'artists-nta',
+
     paint: {
       'line-color': '#ffffff',
       'line-width': 1
     }
   });
 
-  // hidden initially
+  // =====================================
+  // POPUPS
+  // =====================================
 
-  map.setLayoutProperty(
-    'artist-fill-layer',
-    'visibility',
-    'none'
-  );
+  map.on('click', 'artist-fill-layer', e => {
 
-  map.setLayoutProperty(
-    'artist-outline-layer',
-    'visibility',
-    'none'
-  );
+    const feature = e.features[0];
+
+    const name =
+      feature.properties.ntaname;
+
+    const count =
+      feature.properties.artist_count || 0;
+
+    const filterLink =
+      `${BASE_SOFTR_DIRECTORY}?filter-by-Neighborhood=${encodeURIComponent(name)}`;
+
+    new mapboxgl.Popup()
+      .setLngLat(e.lngLat)
+      .setHTML(`
+        <div style="max-width:220px;">
+          <h3>${name}</h3>
+
+          <p>
+            ${count} artist${count === 1 ? '' : 's'}
+          </p>
+
+          <a
+            href="${filterLink}"
+            target="_blank"
+          >
+            View Artists
+          </a>
+        </div>
+      `)
+      .addTo(map);
+  });
+
+  // =====================================
+  // HOVER CURSOR
+  // =====================================
+
+  map.on('mouseenter', 'artist-fill-layer', () => {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+
+  map.on('mouseleave', 'artist-fill-layer', () => {
+    map.getCanvas().style.cursor = '';
+  });
+
+  // =====================================
+  // HIDDEN INITIALLY
+  // =====================================
+
+
+map.setLayoutProperty(
+  'subway-labels-layer',
+  'visibility',
+  zoom >= 14
+    ? 'visible'
+    : 'none'
+);
+
 }
 
 // =====================================================
@@ -331,10 +440,117 @@ function createLegendSection(title) {
   };
 }
 
+
+function loadSubwayLayers() {
+
+  // =====================================
+  // SUBWAY LINES
+  // =====================================
+
+  map.addSource('subway-lines', {
+    type: 'geojson',
+    data: 'nyc-subway-routes.geojson'
+  });
+
+  map.addLayer({
+    id: 'subway-lines-layer',
+    type: 'line',
+    source: 'subway-lines',
+
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round'
+    },
+
+    paint: {
+      'line-width': 2,
+
+      'line-color': [
+        'match',
+        ['get', 'rt_symbol'],
+
+        '1', '#EE352E',
+        '2', '#EE352E',
+        '3', '#EE352E',
+
+        '4', '#00933C',
+        '5', '#00933C',
+        '6', '#00933C',
+
+        'A', '#2850AD',
+        'C', '#2850AD',
+        'E', '#2850AD',
+
+        'B', '#FF6319',
+        'D', '#FF6319',
+        'F', '#FF6319',
+        'M', '#FF6319',
+
+        'N', '#FCCC0A',
+        'Q', '#FCCC0A',
+        'R', '#FCCC0A',
+        'W', '#FCCC0A',
+
+        'L', '#A7A9AC',
+        'G', '#6CBE45',
+
+        'J', '#996633',
+        'Z', '#996633',
+
+        '7', '#B933AD',
+
+        '#000000'
+      ]
+    }
+  });
+
+  // =====================================
+  // SUBWAY STOPS
+  // =====================================
+
+  map.addSource('subway-stops', {
+    type: 'geojson',
+    data: 'nyc-subway-stops.geojson'
+  });
+
+  map.addLayer({
+    id: 'subway-stops-layer',
+    type: 'circle',
+    source: 'subway-stops',
+
+    paint: {
+      'circle-radius': 1,
+      'circle-color': '#ffffff',
+      'circle-stroke-width': 1,
+      'circle-stroke-color': '#000000'
+    }
+  });
+
+  map.addLayer({
+    id: 'subway-labels-layer',
+    type: 'symbol',
+    source: 'subway-stops',
+
+    layout: {
+      'text-field': ['get', 'name'],
+      'text-size': 12,
+      'text-offset': [0, 1.2],
+      'text-anchor': 'top',
+      'visibility': 'none'
+    },
+
+    paint: {
+      'text-color': '#000000',
+      'text-halo-color': '#ffffff',
+      'text-halo-width': 1
+    }
+  });
+}
+
 // =====================================================
 // BUILD COMBINED LEGEND
 // =====================================================
-
+loadSubwayLayers();
 function buildCombinedLegend() {
 
   const legend =
