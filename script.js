@@ -276,6 +276,8 @@ function createMarkers(data) {
 
 async function loadArtistLayer() {
 
+const activeNeighborhoods = [];
+
   const artists = await fetchArtistData();
 
   artists.forEach(artist => {
@@ -298,18 +300,20 @@ async function loadArtistLayer() {
   const geojson =
     await response.json();
 
-  geojson.features.forEach(feature => {
+geojson.features.forEach(feature => {
 
-    const nta =
-      feature.properties.ntaname?.trim();
+  const count =
+    feature.properties.artist_count || 0;
 
-    const count =
-      neighborhoodCounts[nta] || 0;
+  if (count > 0) {
 
-    feature.properties.artist_count = count;
+    activeNeighborhoods.push(
+      feature.properties.ntaname
+    );
 
-    visibleNeighborhoods.add(nta);
-  });
+  }
+});
+
 
   // SOURCE
 
@@ -794,8 +798,16 @@ function buildCombinedLegend() {
     }
   );
 
-  Object.keys(neighborhoodCounts)
-    .sort()
+
+geojson.features
+  .filter(feature =>
+    feature.properties.artist_count > 0
+  )
+  .map(feature =>
+    feature.properties.ntaname
+  )
+  .sort()
+
 
     .forEach(neighborhood => {
 
