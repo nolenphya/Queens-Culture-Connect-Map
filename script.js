@@ -38,8 +38,9 @@ const AIRTABLE_URL =
 // ARTIST AIRTABLE
 // =====================================================
 
-const BASE_ID = 'apppBx0a9hj0Z1ciw';
-const TABLE_NAME = 'tbl9OiPT8QI8ss20e';
+
+const ARTIST_BASE_ID = 'apppBx0a9hj0Z1ciw';
+const ARTIST_TABLE_NAME = 'tbl9OiPT8QI8ss20e';
 
 const ARTIST_URL =
   `https://api.airtable.com/v0/${ARTIST_BASE_ID}/${ARTIST_TABLE_NAME}`;
