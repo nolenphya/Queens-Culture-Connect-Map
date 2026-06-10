@@ -354,29 +354,27 @@ async function loadArtistLayer() {
   // BUILD COUNTS FROM ZIP
   // =====================================================
 
-  artists.forEach(artist => {
+ artists.forEach(artist => {
 
-    const zip =
-      String(
-        artist.Zip ||
-        artist.ZIP ||
-        ''
-      ).trim();
+  let nta = artist.NTA_Map;
 
-    if (!zip) return;
+  // Airtable lookup / linked fields sometimes come back as arrays
+  if (Array.isArray(nta)) {
+    nta = nta[0];
+  }
 
-    const ntaName =
-      zipToNeighborhood[zip];
+  nta = nta?.trim();
 
-    if (!ntaName) return;
+  if (!nta) return;
 
-    if (!neighborhoodCounts[ntaName]) {
-      neighborhoodCounts[ntaName] = 0;
-    }
+  if (!neighborhoodCounts[nta]) {
+    neighborhoodCounts[nta] = 0;
+  }
 
-    neighborhoodCounts[ntaName]++;
-  });
+  neighborhoodCounts[nta]++;
+});
 
+console.log("Neighborhood counts:", neighborhoodCounts);
   // =====================================================
   // LOAD GEOJSON
   // =====================================================
