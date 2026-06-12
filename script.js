@@ -302,6 +302,9 @@ function createMarkers(data) {
 
  const orgLink =
   `${ORG_PROFILE_URL}?recordId=${row.id}`;
+  
+    const imageUrl = Array.isArray(row.Image) && row.Image.length > 0 ? row.Image[0].url : '';
+
 
 const popup = new mapboxgl.Popup({ offset: 25 })
   .setHTML(`
