@@ -1,4 +1,3 @@
-
 // =====================================================
 // MAP SETUP
 // =====================================================
@@ -39,115 +38,551 @@ const AIRTABLE_URL =
 // ARTIST AIRTABLE
 // =====================================================
 
+
 const ARTIST_BASE_ID = 'apppBx0a9hj0Z1ciw';
 const ARTIST_TABLE_NAME = 'tbl9OiPT8QI8ss20e';
-const ARTIST_AIRTABLE_URL = `https://api.airtable.com/v0/${ARTIST_BASE_ID}/${ARTIST_TABLE_NAME}`;
+
+const ARTIST_URL =
+  `https://api.airtable.com/v0/${ARTIST_BASE_ID}/${ARTIST_TABLE_NAME}`;
 
 // =====================================================
-// ZIP CODE CROSSWALK
+// GLOBALS
 // =====================================================
 
-const ZIP_TO_NTA = {
-  "11101": "Long Island City-Hunter's Point",
-  "11102": "Astoria",
-  "11103": "Astoria",
-  "11104": "Sunnyside",
-  "11105": "Astoria",
-  "11106": "Astoria",
-  "11354": "Flushing",
-  "11355": "Flushing",
-  "11356": "College Point",
-  "11357": "Whitestone",
-  "11358": "Flushing",
-  "11360": "Bayside-Little Neck",
-  "11361": "Bayside-Little Neck",
-  "11362": "Bayside-Little Neck",
-  "11363": "Bayside-Little Neck",
-  "11364": "Bayside-Little Neck",
-  "11365": "Fresh Meadows",
-  "11366": "Fresh Meadows",
-  "11367": "Kew Gardens Hills",
-  "11368": "Corona",
-  "11369": "Airport",
-  "11370": "Jackson Heights",
-  "11371": "Airport",
-  "11372": "Jackson Heights",
-  "11373": "Elmhurst",
-  "11374": "Rego Park",
-  "11375": "Forest Hills",
-  "11377": "Woodside",
-  "11378": "Maspeth",
-  "11379": "Middle Village",
-  "11385": "Ridgewood",
-  "11411": "Cambria Heights",
-  "11412": "St. Albans",
-  "11413": "Laurelton",
-  "11414": "Howard Beach",
-  "11415": "Kew Gardens",
-  "11416": "Ozone Park",
-  "11417": "Ozone Park",
-  "11418": "Richmond Hill",
-  "11419": "Richmond Hill",
-  "11420": "South Ozone Park",
-  "11421": "Woodhaven",
-  "11422": "Rosedale",
-  "11423": "Hollis",
-  "11426": "Bellerose",
-  "11427": "Hollis",
-  "11428": "Queens Village",
-  "11429": "Queens Village",
-  "11432": "Jamaica",
-  "11433": "Jamaica",
-  "11434": "Jamaica",
-  "11435": "Jamaica",
-  "11436": "Jamaica",
-  "11691": "Far Rockaway-Bayswater",
-  "11692": "Rockaway Beach",
-  "11693": "Rockaway Beach",
-  "11694": "Rockaway Beach",
-  "11697": "Breezy Point"
-};
-
-// =====================================================
-// GLOBAL DATA STORAGE
-// =====================================================
-
-let organizationsData = [];
-let artistsData = [];
-let allActiveRecords = [];
 let allMarkers = [];
-let geoData = null;
-
-const hiddenTags = new Set();
-const enabledNeighborhoods = new Set();
-let assignedColors = {};
 
 let organizationsVisible = true;
 let artistsVisible = true;
 
+let organizationTagGroups = {};
+
+const neighborhoodCounts = {};
+
+let visibleNeighborhoods =
+  new Set();
+
+let artistNeighborhoodList = [];
+
+const BASE_SOFTR_DIRECTORY =
+  "https://elwanda52071.softr.app";
+
+const ORG_PROFILE_URL =
+  `${BASE_SOFTR_DIRECTORY}/organization-details`;
+
+const ARTIST_DIRECTORY_URL =
+  `${BASE_SOFTR_DIRECTORY}/artists`;
+
 // =====================================================
-// DATA FETCHING (AIRTABLE)
+// ZIP → NTA LOOKUP
 // =====================================================
 
-async function fetchAllAirtable(url) {
+const zipToNeighborhood = {
+
+  "11101": "Long Island City-Hunters Point",
+  "11102": "Old Astoria",
+  "11103": "Astoria",
+  "11104": "Astoria",
+  "11105": "Astoria",
+  "11106": "Old Astoria",
+
+  "11354": "Downtown Flushing",
+  "11355": "Downtown Flushing",
+  "11358": "Queensboro Hill",
+  "11361": "Bayside-Bayside Hills",
+  "11362": "Douglaston-Little Neck",
+  "11363": "Douglaston-Little Neck",
+
+  "11364": "Oakland Gardens",
+  "11365": "Fresh Meadows-Utopia",
+  "11366": "Fresh Meadows-Utopia",
+  "11367": "Pomonok-Flushing Heights-Hillcrest",
+
+  "11368": "Corona",
+  "11369": "East Elmhurst",
+  "11370": "Astoria",
+
+  "11372": "Jackson Heights",
+  "11373": "Elmhurst",
+  "11374": "Rego Park",
+  "11375": "Forest Hills",
+
+  "11377": "Woodside",
+  "11378": "Maspeth",
+  "11379": "Middle Village",
+  "11385": "Ridgewood",
+
+  "11411": "Cambria Heights",
+  "11412": "St. Albans",
+  "11413": "Springfield Gardens North",
+  "11414": "Howard Beach",
+  "11415": "Kew Gardens",
+
+  "11416": "Ozone Park",
+  "11417": "Ozone Park",
+  "11418": "Richmond Hill",
+  "11419": "South Richmond Hill",
+  "11420": "South Ozone Park",
+
+  "11421": "Woodhaven",
+  "11422": "Rosedale",
+  "11423": "Hollis",
+  "11426": "Bellerose",
+
+  "11427": "Queens Village",
+  "11428": "Queens Village",
+  "11429": "Queens Village",
+
+  "11432": "Jamaica",
+  "11433": "Jamaica",
+  "11434": "Jamaica",
+  "11435": "Jamaica",
+  "11436": "South Jamaica",
+
+  "11691": "Far Rockaway",
+  "11692": "Hammels-Arverne-Edgemere",
+  "11693": "Broad Channel",
+  "11694": "Rockaway Park-Belle Harbor",
+  "11697": "Breezy Point"
+};
+
+// =====================================================
+// ICONS
+// =====================================================
+
+const iconMap = {
+  'Community Garden': 'community-garden',
+  'Gallery': 'gallery',
+  'Museum/Cultural Institution': 'museum',
+  'Music Group/Vocal Ensembles': 'music-group-vocal-ensemble',
+  'Dance Company': 'dance-studio',
+  'Multidisciplinary Arts Center': 'multidisciplinary-arts-center',
+  'Community Center': 'community-center',
+  'Theatre': 'theatre',
+  'Video-Film Company': 'video-film-company',
+  'Art Center-Studio': 'art-center-studio',
+  'Cultural Arts Center': 'cultural-arts-center',
+  'Historical Society-Preservation Group': 'archive'
+};
+
+// =====================================================
+// FETCH ORGANIZATION DATA
+// =====================================================
+
+async function fetchData() {
+
+  const filterFormula =
+    encodeURIComponent("{Approved}=TRUE()");
+
+  const viewName =
+    encodeURIComponent("main");
+
   let allRecords = [];
-  let offset = '';
-  try {
-    do {
-      const fetchUrl = offset ? `${url}?offset=${offset}` : url;
-      const resp = await fetch(fetchUrl, {
-        headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` }
-      });
-      if (!resp.ok) throw new Error(`HTTP Error: ${resp.status}`);
-      const data = await resp.json();
-      allRecords = allRecords.concat(data.records);
-      offset = data.offset || '';
-    } while (offset);
-    return allRecords;
-  } catch (err) {
-    console.error("Airtable fetch failed:", err);
-    return [];
+  let offset = null;
+
+  do {
+
+    const fetchUrl =
+      `${AIRTABLE_URL}?view=${viewName}&filterByFormula=${filterFormula}${offset ? `&offset=${offset}` : ''}`;
+
+    const res = await fetch(fetchUrl, {
+      headers: {
+        Authorization:
+          `Bearer ${AIRTABLE_API_KEY}`
+      }
+    });
+
+    const data = await res.json();
+
+    allRecords =
+      allRecords.concat(data.records || []);
+
+    offset = data.offset || null;
+
+  } while (offset);
+
+  return allRecords;
+}
+
+// =====================================================
+// FETCH ARTIST DATA
+// =====================================================
+
+async function fetchArtistData() {
+
+  let records = [];
+  let offset = null;
+
+  do {
+
+    const url =
+      `${ARTIST_URL}${offset ? `?offset=${offset}` : ''}`;
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization:
+          `Bearer ${AIRTABLE_API_KEY}`
+      }
+    });
+
+    const data = await res.json();
+
+    records =
+      records.concat(data.records || []);
+
+    offset = data.offset || null;
+
+  } while (offset);
+
+  return records.map(r => r.fields);
+}
+
+// =====================================================
+// CREATE ORGANIZATION MARKERS
+// =====================================================
+
+function createMarkers(data) {
+
+  allMarkers.forEach(m => m.remove());
+
+  allMarkers = [];
+
+  organizationTagGroups = {};
+
+  data.forEach(row => {
+
+    const lat =
+      parseFloat(row.Latitude);
+
+    const lng =
+      parseFloat(row.Longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      return;
+    }
+
+    const tags =
+      (row.Tags || '')
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean);
+
+    const primaryTag =
+      tags[0] || 'Uncategorized';
+
+    const iconKey =
+      iconMap[primaryTag] || 'default';
+
+    const el =
+      document.createElement('div');
+
+    el.style.backgroundImage =
+      `url(icons/${iconKey}.png)`;
+
+    el.style.width = '32px';
+    el.style.height = '32px';
+    el.style.backgroundSize = 'contain';
+    el.style.backgroundRepeat = 'no-repeat';
+
+    el.style.display =
+  organizationsVisible
+    ? 'block'
+    : 'none';
+
+    const label =
+      document.createElement('div');
+
+    label.className = 'marker-label';
+
+    label.innerText =
+      row["Org Name"] || "Unnamed";
+
+    label.style.display = 'none';
+
+    el.appendChild(label);
+
+ const orgLink =
+  `${ORG_PROFILE_URL}?recordId=${row.id}`;
+  
+    const imageUrl = Array.isArray(row.Image) && row.Image.length > 0 ? row.Image[0].url : '';
+
+
+const popup = new mapboxgl.Popup({ offset: 25 })
+  .setHTML(`
+    <div style="max-width:250px;">
+
+      ${
+        imageUrl
+          ? `<img src="${imageUrl}" style="width:100%;margin-bottom:10px;">`
+          : ''
+      }
+
+      <h3>${row["Org Name"] || 'Untitled'}</h3>
+
+      ${
+        row.Description
+          ? `<p>${row.Description}</p>`
+          : ''
+      }
+
+      ${
+        row.Address
+          ? `<p><b>Address:</b><br>${row.Address}</p>`
+          : ''
+      }
+
+      <p style="margin-top:10px;">
+        <a
+          href="${orgLink}"
+          target="_blank"
+        >
+          View Organization Profile
+        </a>
+      </p>
+
+    </div>
+  `);
+
+    const marker =
+      new mapboxgl.Marker(el)
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(map);
+
+    marker.rowData = row;
+    marker.labelElement = label;
+
+    allMarkers.push(marker);
+
+    tags.forEach(tag => {
+
+      if (!organizationTagGroups[tag]) {
+        organizationTagGroups[tag] = [];
+      }
+
+      organizationTagGroups[tag]
+        .push(marker);
+    });
+  });
+}
+
+// =====================================================
+// LOAD ARTIST CHOROPLETH
+// =====================================================
+
+async function loadArtistLayer() {
+
+  const artists =
+    await fetchArtistData();
+
+  // RESET COUNTS
+
+  Object.keys(neighborhoodCounts)
+    .forEach(key => {
+      delete neighborhoodCounts[key];
+    });
+
+  // =====================================================
+  // BUILD COUNTS FROM ZIP
+  // =====================================================
+
+ artists.forEach(artist => {
+
+  let nta = artist.NTA_Map;
+
+  // Airtable lookup / linked fields sometimes come back as arrays
+  if (Array.isArray(nta)) {
+    nta = nta[0];
   }
+
+  nta = nta?.trim();
+
+  if (!nta) return;
+
+  if (!neighborhoodCounts[nta]) {
+    neighborhoodCounts[nta] = 0;
+  }
+
+  neighborhoodCounts[nta]++;
+});
+
+console.log("Neighborhood counts:", neighborhoodCounts);
+  // =====================================================
+  // LOAD GEOJSON
+  // =====================================================
+
+  const response =
+    await fetch('queens_neighborhoods.geojson');
+
+  const geojson =
+    await response.json();
+
+  artistNeighborhoodList = [];
+
+  geojson.features.forEach(feature => {
+
+    const nta =
+      feature.properties.ntaname?.trim();
+
+    const count =
+      neighborhoodCounts[nta] || 0;
+
+    feature.properties.artist_count =
+      count;
+
+    if (count > 0) {
+
+      artistNeighborhoodList.push(nta);
+
+      visibleNeighborhoods.add(nta);
+    }
+  });
+
+  // =====================================================
+  // SOURCE
+  // =====================================================
+
+  if (!map.getSource('artists-nta')) {
+
+    map.addSource('artists-nta', {
+      type: 'geojson',
+      data: geojson
+    });
+
+  } else {
+
+    map.getSource('artists-nta')
+      .setData(geojson);
+  }
+
+  // =====================================================
+  // FILL
+  // =====================================================
+
+  if (!map.getLayer('artist-fill-layer')) {
+
+    map.addLayer({
+      id: 'artist-fill-layer',
+      type: 'fill',
+      source: 'artists-nta',
+
+      paint: {
+
+        'fill-color': [
+
+          'interpolate',
+          ['linear'],
+          ['get', 'artist_count'],
+
+          0, '#f7fbff',
+          1, '#deebf7',
+          3, '#c6dbef',
+          5, '#9ecae1',
+          8, '#6baed6',
+          12, '#4292c6',
+          16, '#2171b5',
+          20, '#08519c',
+          30, '#08306b'
+        ],
+
+        'fill-opacity': 0.75
+      }
+    });
+  }
+
+  // =====================================================
+  // OUTLINES
+  // =====================================================
+
+  if (!map.getLayer('artist-outline-layer')) {
+
+    map.addLayer({
+      id: 'artist-outline-layer',
+      type: 'line',
+      source: 'artists-nta',
+
+      paint: {
+        'line-color': '#000000',
+        'line-width': 1
+      }
+    });
+  }
+
+  // =====================================================
+  // OPEN INITIALLY
+  // =====================================================
+
+map.setLayoutProperty(
+  'artist-fill-layer',
+  'visibility',
+  artistsVisible
+    ? 'visible'
+    : 'none'
+);
+
+map.setLayoutProperty(
+  'artist-outline-layer',
+  'visibility',
+  artistsVisible
+    ? 'visible'
+    : 'none'
+);
+
+  // =====================================================
+  // POPUPS
+  // =====================================================
+
+  map.on('click', 'artist-fill-layer', e => {
+
+    const feature =
+      e.features[0];
+
+    const name =
+      feature.properties.ntaname;
+
+    const count =
+      feature.properties.artist_count || 0;
+
+    const filterLink =
+      `${ARTIST_DIRECTORY_URL}?filter-by-Neighborhood=${encodeURIComponent(name)}`;
+
+    new mapboxgl.Popup()
+      .setLngLat(e.lngLat)
+      .setHTML(`
+        <div style="max-width:220px;">
+          <h3>${name}</h3>
+
+          <p>
+            ${count} artist${count === 1 ? '' : 's'}
+          </p>
+
+          <a
+            href="${filterLink}"
+            target="_blank"
+          >
+            View Artists
+          </a>
+        </div>
+      `)
+      .addTo(map);
+  });
+
+  map.on(
+    'mouseenter',
+    'artist-fill-layer',
+    () => {
+      map.getCanvas().style.cursor =
+        'pointer';
+    }
+  );
+
+  map.on(
+    'mouseleave',
+    'artist-fill-layer',
+    () => {
+      map.getCanvas().style.cursor =
+        '';
+    }
+  );
 }
 
 // =====================================================
@@ -155,19 +590,78 @@ async function fetchAllAirtable(url) {
 // =====================================================
 
 function loadSubwayLayers() {
-  map.addSource('subway-stations', {
+
+  map.addSource('subway-lines', {
     type: 'geojson',
-    data: 'subway_stations.geojson'
+    data: 'nyc-subway-routes.geojson'
   });
 
   map.addLayer({
-    id: 'subway-dots-layer',
-    type: 'circle',
-    source: 'subway-stations',
+    id: 'subway-lines-layer',
+    type: 'line',
+    source: 'subway-lines',
+
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round'
+    },
+
     paint: {
-      'circle-radius': 4.5,
-      'circle-color': '#FFD700',
-      'circle-stroke-width': 1.5,
+      'line-width': 2,
+
+      'line-color': [
+        'match',
+        ['get', 'rt_symbol'],
+
+        '1', '#EE352E',
+        '2', '#EE352E',
+        '3', '#EE352E',
+
+        '4', '#00933C',
+        '5', '#00933C',
+        '6', '#00933C',
+
+        'A', '#2850AD',
+        'C', '#2850AD',
+        'E', '#2850AD',
+
+        'B', '#FF6319',
+        'D', '#FF6319',
+        'F', '#FF6319',
+        'M', '#FF6319',
+
+        'N', '#FCCC0A',
+        'Q', '#FCCC0A',
+        'R', '#FCCC0A',
+        'W', '#FCCC0A',
+
+        'L', '#A7A9AC',
+        'G', '#6CBE45',
+
+        'J', '#996633',
+        'Z', '#996633',
+
+        '7', '#B933AD',
+
+        '#000000'
+      ]
+    }
+  });
+
+  map.addSource('subway-stops', {
+    type: 'geojson',
+    data: 'nyc-subway-stops.geojson'
+  });
+
+  map.addLayer({
+    id: 'subway-stops-layer',
+    type: 'circle',
+    source: 'subway-stops',
+
+    paint: {
+      'circle-radius': 1,
+      'circle-color': '#ffffff',
+      'circle-stroke-width': 1,
       'circle-stroke-color': '#000000'
     }
   });
@@ -175,383 +669,384 @@ function loadSubwayLayers() {
   map.addLayer({
     id: 'subway-labels-layer',
     type: 'symbol',
-    source: 'subway-stations',
+    source: 'subway-stops',
+
     layout: {
       'text-field': ['get', 'name'],
-      'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-      'text-size': 10,
-      'text-offset': [0, 0.8],
+      'text-size': 12,
+      'text-offset': [0, 1.2],
       'text-anchor': 'top',
       'visibility': 'none'
     },
+
     paint: {
-      'text-color': '#333333',
+      'text-color': '#000000',
       'text-halo-color': '#ffffff',
-      'text-halo-width': 1.5
+      'text-halo-width': 1
     }
   });
+}
 
-  map.on('click', 'subway-dots-layer', (e) => {
-    if (!e.features.length) return;
-    const props = e.features[0].properties;
-    const coords = e.features[0].geometry.coordinates;
+// =====================================================
+// LEGEND HELPERS
+// =====================================================
 
-    new mapboxgl.Popup()
-      .setLngLat(coords)
-      .setHTML(`
-        <div style="font-family:sans-serif; padding:4px;">
-          <strong style="font-size:13px; color:#111;">${props.name}</strong><br/>
-          <span style="font-size:11px; color:#555; margin-top:3px; display:inline-block;">
-            <b>Lines:</b> ${props.line}
-          </span>
-        </div>
-      `)
-      .addTo(map);
+function createLegendSection(title) {
+
+  const section =
+    document.createElement('div');
+
+  section.className =
+    'legend-section';
+
+  const header =
+    document.createElement('div');
+
+  header.className =
+    'legend-section-header';
+
+  const arrow =
+    document.createElement('span');
+
+  arrow.textContent = '▶';
+
+  const checkbox =
+    document.createElement('input');
+
+  checkbox.type = 'checkbox';
+  checkbox.checked = organizationsVisible;
+
+  const label =
+    document.createElement('label');
+
+  label.textContent = title;
+
+  const content =
+    document.createElement('div');
+
+  content.className =
+    'legend-section-content collapsed';
+
+  header.appendChild(arrow);
+  header.appendChild(checkbox);
+  header.appendChild(label);
+
+  section.appendChild(header);
+  section.appendChild(content);
+
+  header.addEventListener('click', e => {
+
+    if (
+      e.target.tagName.toLowerCase()
+      === 'input'
+    ) {
+      return;
+    }
+
+    content.classList.toggle(
+      'collapsed'
+    );
+
+    arrow.textContent =
+      content.classList.contains('collapsed')
+        ? '▶'
+        : '▼';
   });
 
-  map.on('mouseenter', 'subway-dots-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', 'subway-dots-layer', () => { map.getCanvas().style.cursor = ''; });
+  return {
+    section,
+    content,
+    checkbox
+  };
 }
 
 // =====================================================
-// CHOROPLETH COLOR CALCULATIONS (FIXED MOVED UP)
+// BUILD LEGEND
 // =====================================================
 
-function getStepColor(count, max) {
-  if (max <= 0) return '#f7fbff';
-  const pct = count / max;
-  if (pct > 0.85) return '#084594';
-  if (pct > 0.70) return '#2171b5';
-  if (pct > 0.55) return '#4292c6';
-  if (pct > 0.40) return '#6baed6';
-  if (pct > 0.25) return '#9ecae1';
-  if (pct > 0.10) return '#c6dbef';
-  if (pct > 0.02) return '#deebf7';
-  return '#f7fbff';
-}
+console.log(
+  'Markers:',
+  allMarkers.length
+);
 
-function getColorSpectrum(max) {
-  return [
-    { label: '0', color: '#f7fbff' },
-    { label: `1 - ${Math.max(1, Math.round(max * 0.15))}`, color: '#deebf7' },
-    { label: `${Math.round(max * 0.15) + 1} - ${Math.round(max * 0.4)}`, color: '#9ecae1' },
-    { label: `${Math.round(max * 0.4) + 1} - ${Math.round(max * 0.7)}`, color: '#4292c6' },
-    { label: `${Math.round(max * 0.7) + 1}+`, color: '#084594' }
-  ];
-}
+console.log(
+  'Neighborhood counts:',
+  neighborhoodCounts
+);
 
 // =====================================================
-// COMBINED CHECKLIST LEGEND ENGINE (FIXED LOCATION)
+// BUILD LEGEND
 // =====================================================
 
-function buildCombinedLegend(groups, maxCount) {
-  const container = document.getElementById('legend');
-  if (!container) return;
+function buildCombinedLegend() {
+  const legend = document.getElementById('legend-content');
+  legend.innerHTML = '';
 
-  container.innerHTML = '';
+  // =====================================================
+  // ORGANIZATIONS SECTION
+  // =====================================================
+  const organizationsSection = createLegendSection('Organizations');
+  legend.appendChild(organizationsSection.section);
 
-  const scaleSteps = getColorSpectrum(maxCount);
+  // Sync the master toggle state
+  organizationsSection.checkbox.checked = organizationsVisible;
 
-  const scaleWrapper = document.createElement('div');
-  scaleWrapper.style.margin = '0 0 15px 0';
-  scaleWrapper.style.padding = '8px';
-  scaleWrapper.style.background = '#f9f9f9';
-  scaleWrapper.style.borderRadius = '4px';
-  scaleWrapper.style.border = '1px solid #eaeaea';
-
-  let scaleHtml = `<div style="font-size:11px; font-weight:bold; margin-bottom:6px; color:#444; text-transform:uppercase;">Artist Density Scale</div>`;
-  scaleSteps.forEach(step => {
-    scaleHtml += `
-      <div style="display:flex; align-items:center; margin-bottom:3px; font-size:11px;">
-        <div style="width:16px; height:11px; background:${step.color}; margin-right:8px; border:1px solid #ccc; border-radius:1px;"></div>
-        <span>${step.label} spaces</span>
-      </div>`;
+  organizationsSection.checkbox.addEventListener('change', e => {
+    organizationsVisible = e.target.checked;
+    allMarkers.forEach(marker => {
+      marker.getElement().style.display = organizationsVisible ? 'block' : 'none';
+    });
   });
-  scaleWrapper.innerHTML = scaleHtml;
-  container.appendChild(scaleWrapper);
 
-  const catTitle = document.createElement('h3');
-  catTitle.style = "margin: 15px 0 8px 0; font-size:12px; text-transform:uppercase; color:#666; letter-spacing:0.5px;";
-  catTitle.textContent = "Filter Neighborhoods";
-  container.appendChild(catTitle);
+  // Populate organization items
+  Object.entries(organizationTagGroups)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .forEach(([tag, markers]) => {
+      const category = document.createElement('div');
+      const header = document.createElement('div');
+      header.innerHTML = `<span class="arrow">▸</span> ${tag}`;
+      header.className = 'legend-category-header';
 
-  Object.keys(groups).sort().forEach(ntaName => {
-    const totalArtists = groups[ntaName].length;
-    if (totalArtists === 0) return;
+      const list = document.createElement('ul');
+      list.style.display = 'none';
 
-    const row = document.createElement('div');
-    row.className = 'neighborhood-legend-item';
-    row.style = "display:flex; align-items:center; padding:4px 0; font-size:12px;";
+      header.addEventListener('click', () => {
+        const collapsed = list.style.display === 'none';
+        list.style.display = collapsed ? 'block' : 'none';
+        header.querySelector('.arrow').textContent = collapsed ? '▾' : '▸';
+      });
 
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.style.marginRight = '8px';
-    checkbox.checked = enabledNeighborhoods.has(ntaName);
+      markers.forEach(marker => {
+        const li = document.createElement('li');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
 
-    checkbox.addEventListener('change', (e) => {
-      if (e.target.checked) {
-        enabledNeighborhoods.add(ntaName);
-      } else {
-        enabledNeighborhoods.delete(ntaName);
-      }
-      refreshMapFiltersAndPins();
+        checkbox.addEventListener('change', () => {
+          marker.getElement().style.display = organizationsVisible && checkbox.checked ? 'block' : 'none';
+        });
+
+        const label = document.createElement('span');
+        label.textContent = marker.rowData["Org Name"];
+        label.className = 'legend-link';
+
+        label.addEventListener('click', () => {
+          map.flyTo({
+            center: marker.getLngLat(),
+            zoom: 15
+          });
+          marker.togglePopup();
+        });
+
+        li.appendChild(checkbox);
+        li.appendChild(label);
+        list.appendChild(li);
+      });
+
+      category.appendChild(header);
+      category.appendChild(list);
+      organizationsSection.content.appendChild(category);
     });
 
-    const colorSwatch = document.createElement('div');
-    colorSwatch.style = `width:12px; height:12px; background:${getStepColor(totalArtists, maxCount)}; margin-right:8px; border:1px solid #777; border-radius:2px; flex-shrink:0;`;
+  // =====================================================
+  // ARTISTS SECTION
+  // =====================================================
+  const artistsSection = createLegendSection('Artists');
+  legend.appendChild(artistsSection.section);
 
-    const nameSpan = document.createElement('span');
-    nameSpan.style = "cursor:pointer; flex-grow:1; color:#333;";
-    nameSpan.innerHTML = `<b>${ntaName}</b> <span style="color:#888;">(${totalArtists})</span>`;
+  // Sync the master toggle state safely now that it is declared
+  artistsSection.checkbox.checked = artistsVisible;
 
-    nameSpan.addEventListener('click', () => {
-      if (geoData) {
-        const featureMatch = geoData.features.find(f => f.properties.ntaname === ntaName);
-        if (featureMatch && typeof turf !== 'undefined') {
-          const centerPoint = turf.center(featureMatch).geometry.coordinates;
-          map.flyTo({ center: centerPoint, zoom: 13.5, essential: true });
+  artistsSection.checkbox.addEventListener('change', e => {
+    artistsVisible = e.target.checked;
+    const visibility = artistsVisible ? 'visible' : 'none';
+
+    map.setLayoutProperty('artist-fill-layer', 'visibility', visibility);
+    map.setLayoutProperty('artist-outline-layer', 'visibility', visibility);
+  });
+
+  // Populate artist neighborhood filters
+  artistNeighborhoodList
+    .sort()
+    .forEach(neighborhood => {
+      const row = document.createElement('div');
+      row.className = 'legend-item-row';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = true;
+
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+          visibleNeighborhoods.add(neighborhood);
+        } else {
+          visibleNeighborhoods.delete(neighborhood);
         }
-      }
+        updateNeighborhoodFilters();
+      });
+
+      const label = document.createElement('label');
+      label.textContent = neighborhood;
+
+      row.appendChild(checkbox);
+      row.appendChild(label);
+      artistsSection.content.appendChild(row);
     });
-
-    row.appendChild(checkbox);
-    row.appendChild(colorSwatch);
-    row.appendChild(nameSpan);
-    container.appendChild(row);
-  });
 }
 
 // =====================================================
-// MAP SYNCHRONIZATION AND RENDER FILTERS
+// FILTER ARTISTS
 // =====================================================
 
-function refreshMapFiltersAndPins() {
-  if (!map.getSource('queens-boundaries') || !geoData) return;
+function updateNeighborhoodFilters() {
 
-  const counts = {};
-  allActiveRecords.forEach(r => {
-    let zip = String((Array.isArray(r.Zip_Code) ? r.Zip_Code[0] : r.Zip_Code) || "").trim();
-    const hood = ZIP_TO_NTA[zip];
-    if (hood) counts[hood] = (counts[hood] || 0) + 1;
-  });
+  const selected =
+    Array.from(
+      visibleNeighborhoods
+    );
 
-  const maxVal = Object.values(counts).length ? Math.max(...Object.values(counts)) : 1;
-  const matchExpression = ['match', ['get', 'ntaname']];
+  map.setFilter(
+    'artist-fill-layer',
+    [
+      'in',
+      ['get', 'ntaname'],
+      ['literal', selected]
+    ]
+  );
 
-  geoData.features.forEach(f => {
-    const name = f.properties.ntaname;
-    if (enabledNeighborhoods.has(name)) {
-      const activeColor = getStepColor(counts[name] || 0, maxVal);
-      matchExpression.push(name, activeColor);
-    } else {
-      matchExpression.push(name, 'rgba(0,0,0,0)');
-    }
-  });
-
-  matchExpression.push('rgba(0,0,0,0)');
-  map.setPaintProperty('neighborhood-polygons-fill', 'fill-color', matchExpression);
-
-  allMarkers.forEach(m => {
-    let zip = String((Array.isArray(m.rowData.Zip_Code) ? m.rowData.Zip_Code[0] : m.rowData.Zip_Code) || "").trim();
-    const hood = ZIP_TO_NTA[zip];
-    if (enabledNeighborhoods.has(hood)) {
-      m.getElement().style.display = 'block';
-      if (m.labelElement) m.labelElement.style.display = (map.getZoom() >= 14) ? 'block' : 'none';
-    } else {
-      m.getElement().style.display = 'none';
-      if (m.labelElement) m.labelElement.style.display = 'none';
-    }
-  });
+  map.setFilter(
+    'artist-outline-layer',
+    [
+      'in',
+      ['get', 'ntaname'],
+      ['literal', selected]
+    ]
+  );
 }
 
 // =====================================================
-// SEARCH DIRECTORY AUTOCOMPLETE
+// SEARCH
 // =====================================================
 
-function setupSearchInput() {
-  const searchInput = document.getElementById('search-input');
-  const resultsBox = document.getElementById('search-results');
-  if (!searchInput || !resultsBox) return;
+document
+  .getElementById('search-input')
+  .addEventListener('input', e => {
 
-  searchInput.addEventListener('input', () => {
-    const query = searchInput.value.toLowerCase().trim();
-    resultsBox.innerHTML = '';
+    const query =
+      e.target.value
+        .trim()
+        .toLowerCase();
+
+    const results =
+      document.getElementById(
+        'search-results'
+      );
+
+    results.innerHTML = '';
+
     if (!query) return;
 
-    const matched = allActiveRecords.filter(r => {
-      const name = (r["Org Name"] || r["Name"] || "").toLowerCase();
-      const disc = (r["Artistic Disciplines"] || "").toLowerCase();
-      return name.includes(query) || disc.includes(query);
-    }).slice(0, 5);
+    const matches =
+      allMarkers.filter(marker => {
 
-    matched.forEach(m => {
-      const div = document.createElement('div');
-      div.className = 'search-suggestion-item';
-      div.style = "padding:8px; cursor:pointer; border-bottom:1px solid #ddd; background:#fff; font-size:13px;";
-      div.innerHTML = `<b>${m["Name"] || m["Org Name"] || "Unnamed"}</b><br><small>${m["Artistic Disciplines"] || ""}</small>`;
+        const name =
+          (
+            marker.rowData["Org Name"]
+            || ''
+          ).toLowerCase();
 
-      div.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        let zip = String((Array.isArray(m.Zip_Code) ? m.Zip_Code[0] : m.Zip_Code) || "").trim();
-        const hoodName = ZIP_TO_NTA[zip];
-        if (hoodName && geoData) {
-          const feat = geoData.features.find(f => f.properties.ntaname === hoodName);
-          if (feat && typeof turf !== 'undefined') {
-            const center = turf.center(feat).geometry.coordinates;
-            map.flyTo({ center, zoom: 14.5 });
-          }
-        }
-        resultsBox.innerHTML = '';
-        searchInput.value = '';
+        return name.includes(query);
       });
-      resultsBox.appendChild(div);
+
+    matches.forEach(marker => {
+
+      const div =
+        document.createElement('div');
+
+      div.className =
+        'search-result';
+
+      div.textContent =
+        marker.rowData["Org Name"];
+
+      div.addEventListener(
+        'click',
+        () => {
+
+          map.flyTo({
+            center:
+              marker.getLngLat(),
+            zoom: 15
+          });
+
+          marker.togglePopup();
+        }
+      );
+
+      results.appendChild(div);
     });
   });
-}
 
 // =====================================================
-// INTERFACE PANEL STATE BINDINGS
-// =====================================================
-
-document.addEventListener('DOMContentLoaded', () => {
-  const panel = document.getElementById('legend-panel');
-  const toggleBtn = document.getElementById('legend-toggle');
-  const resetBtn = document.getElementById('reset-legend');
-  const introBtn = document.getElementById('close-intro');
-  const guideBox = document.getElementById('map-guide-overlay');
-  const guideClose = document.getElementById('map-guide-close');
-  const infoFab = document.getElementById('info-button');
-  const searchInput = document.getElementById('search-input');
-  const resultsBox = document.getElementById('search-results');
-
-  if (toggleBtn && panel) {
-    toggleBtn.addEventListener('click', () => {
-      panel.classList.toggle('collapsed');
-      toggleBtn.textContent = panel.classList.contains('collapsed') ? 'Show' : 'Hide';
-    });
-  }
-
-  if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-      enabledNeighborhoods.clear();
-      if (geoData) {
-        geoData.features.forEach(f => enabledNeighborhoods.add(f.properties.ntaname));
-      }
-      const groups = {};
-      allActiveRecords.forEach(r => {
-        let zip = String((Array.isArray(r.Zip_Code) ? r.Zip_Code[0] : r.Zip_Code) || "").trim();
-        const hood = ZIP_TO_NTA[zip];
-        if (hood) {
-          if (!groups[hood]) groups[hood] = [];
-          groups[hood].push(r);
-        }
-      });
-      const maxCount = Object.values(groups).length ? Math.max(...Object.values(groups).map(g => g.length)) : 1;
-      buildCombinedLegend(groups, maxCount);
-      refreshMapFiltersAndPins();
-
-      if (searchInput) searchInput.value = '';
-      if (resultsBox) resultsBox.innerHTML = '';
-
-      map.flyTo({ center: [-73.94, 40.73], zoom: 11 });
-    });
-  }
-
-  if (introBtn) {
-    introBtn.addEventListener('click', () => {
-      document.getElementById('intro-overlay').style.display = 'none';
-      if (guideBox) guideBox.style.display = 'flex';
-    });
-  }
-
-  if (infoFab && guideBox) {
-    infoFab.addEventListener('click', () => {
-      guideBox.style.display = 'flex';
-    });
-  }
-
-  if (guideClose && guideBox) {
-    guideClose.addEventListener('click', () => {
-      guideBox.style.display = 'none';
-    });
-  }
-});
-
-// =====================================================
-// ZOOM DYNAMIC MARKER TEXT RESPONSIVENESS
+// ZOOM LABELS
 // =====================================================
 
 map.on('zoom', () => {
-  const zoom = map.getZoom();
-  allMarkers.forEach(m => {
-    let zip = String((Array.isArray(m.rowData.Zip_Code) ? m.rowData.Zip_Code[0] : m.rowData.Zip_Code) || "").trim();
-    const hood = ZIP_TO_NTA[zip];
-    if (enabledNeighborhoods.has(hood)) {
-      if (m.labelElement) m.labelElement.style.display = (zoom >= 14) ? 'block' : 'none';
+
+  const zoom =
+    map.getZoom();
+
+  allMarkers.forEach(marker => {
+
+    if (!marker.labelElement) {
+      return;
     }
+
+    marker.labelElement.style.display =
+      zoom >= 14 &&
+      organizationsVisible
+        ? 'block'
+        : 'none';
   });
+
+  if (
+    map.getLayer(
+      'subway-labels-layer'
+    )
+  ) {
+
+    map.setLayoutProperty(
+      'subway-labels-layer',
+      'visibility',
+      zoom >= 14
+        ? 'visible'
+        : 'none'
+    );
+  }
 });
 
 // =====================================================
-// INITIALIZATION AND PIPELINE LOAD
+// LOAD EVERYTHING
 // =====================================================
 
 map.on('load', async () => {
+
   loadSubwayLayers();
 
-  const orgRecords = await fetchAllAirtable(AIRTABLE_URL);
-  organizationsData = orgRecords.map(r => ({ id: r.id, ...r.fields }));
+  const records =
+    await fetchData();
 
-  const artistRecords = await fetchAllAirtable(ARTIST_AIRTABLE_URL);
-  artistsData = artistRecords.map(r => ({ id: r.id, ...r.fields }));
+  const orgData =
+    records.map(r => ({
+      id: r.id,
+      ...r.fields
+    }));
 
-  allActiveRecords = [...organizationsData, ...artistsData];
+  createMarkers(orgData);
 
-  try {
-    const geoResp = await fetch('queens_neighborhoods.geojson');
-    geoData = await geoResp.json();
-  } catch (err) {
-    console.error("GeoJSON boundaries failed to load:", err);
-  }
+  await loadArtistLayer();
 
-  const groups = {};
-  if (geoData) {
-    geoData.features.forEach(f => {
-      const name = f.properties.ntaname;
-      groups[name] = [];
-      enabledNeighborhoods.add(name);
-    });
-  }
+  buildCombinedLegend();
+  
 
-  allActiveRecords.forEach(r => {
-    let zip = String((Array.isArray(r.Zip_Code) ? r.Zip_Code[0] : r.Zip_Code) || "").trim();
-    const hood = ZIP_TO_NTA[zip];
-    if (hood) {
-      if (!groups[hood]) groups[hood] = [];
-      groups[hood].push(r);
-    }
-  });
-
-  const maxCount = Object.values(groups).length ? Math.max(...Object.values(groups).map(g => g.length)) : 1;
-
-  if (geoData) {
-    map.addSource('queens-boundaries', { type: 'geojson', data: geoData });
-    map.addLayer({
-      id: 'neighborhood-polygons-fill',
-      type: 'fill',
-      source: 'queens-boundaries',
-      paint: { 'fill-opacity': 0.6 }
-    });
-    map.addLayer({
-      id: 'neighborhood-polygons-stroke',
-      type: 'line',
-      source: 'queens-boundaries',
-      paint: { 'line-color': '#ffffff', 'line-width': 1.2 }
-    });
-  }
-
-  buildCombinedLegend(groups, maxCount);
-  refreshMapFiltersAndPins();
-  setupSearchInput();
 });
-
