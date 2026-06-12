@@ -51,8 +51,8 @@ const ARTIST_URL =
 
 let allMarkers = [];
 
-let organizationsVisible = false;
-let artistsVisible = false;
+let organizationsVisible = true;
+let artistsVisible = true;
 
 let organizationTagGroups = {};
 
@@ -64,7 +64,13 @@ let visibleNeighborhoods =
 let artistNeighborhoodList = [];
 
 const BASE_SOFTR_DIRECTORY =
-  'https://elwanda52071.softr.app/artists';
+  "https://elwanda52071.softr.app";
+
+const ORG_PROFILE_URL =
+  `${BASE_SOFTR_DIRECTORY}/organization-details`;
+
+const ARTIST_DIRECTORY_URL =
+  `${BASE_SOFTR_DIRECTORY}/artists`;
 
 // =====================================================
 // ZIP → NTA LOOKUP
@@ -277,7 +283,10 @@ function createMarkers(data) {
     el.style.backgroundSize = 'contain';
     el.style.backgroundRepeat = 'no-repeat';
 
-    el.style.display = 'none';
+    el.style.display =
+  organizationsVisible
+    ? 'block'
+    : 'none';
 
     const label =
       document.createElement('div');
@@ -291,25 +300,44 @@ function createMarkers(data) {
 
     el.appendChild(label);
 
-    const popup =
-      new mapboxgl.Popup({ offset: 25 })
-        .setHTML(`
-          <div style="max-width:250px;">
-            <h3>${row["Org Name"] || 'Untitled'}</h3>
+ const orgLink =
+  `${ORG_PROFILE_URL}?recordId=${row.id}`;
 
-            ${
-              row.Description
-                ? `<p>${row.Description}</p>`
-                : ''
-            }
+const popup = new mapboxgl.Popup({ offset: 25 })
+  .setHTML(`
+    <div style="max-width:250px;">
 
-            ${
-              row.Address
-                ? `<p><b>Address:</b><br>${row.Address}</p>`
-                : ''
-            }
-          </div>
-        `);
+      ${
+        imageUrl
+          ? `<img src="${Image}" style="width:100%;margin-bottom:10px;">`
+          : ''
+      }
+
+      <h3>${row["Org Name"] || 'Untitled'}</h3>
+
+      ${
+        row.Description
+          ? `<p>${row.Description}</p>`
+          : ''
+      }
+
+      ${
+        row.Address
+          ? `<p><b>Address:</b><br>${row.Address}</p>`
+          : ''
+      }
+
+      <p style="margin-top:10px;">
+        <a
+          href="${orgLink}"
+          target="_blank"
+        >
+          View Organization Profile
+        </a>
+      </p>
+
+    </div>
+  `);
 
     const marker =
       new mapboxgl.Marker(el)
@@ -480,17 +508,21 @@ console.log("Neighborhood counts:", neighborhoodCounts);
   // HIDE INITIALLY
   // =====================================================
 
-  map.setLayoutProperty(
-    'artist-fill-layer',
-    'visibility',
-    'none'
-  );
+map.setLayoutProperty(
+  'artist-fill-layer',
+  'visibility',
+  artistsVisible
+    ? 'visible'
+    : 'none'
+);
 
-  map.setLayoutProperty(
-    'artist-outline-layer',
-    'visibility',
-    'none'
-  );
+map.setLayoutProperty(
+  'artist-outline-layer',
+  'visibility',
+  artistsVisible
+    ? 'visible'
+    : 'none'
+);
 
   // =====================================================
   // POPUPS
@@ -508,7 +540,7 @@ console.log("Neighborhood counts:", neighborhoodCounts);
       feature.properties.artist_count || 0;
 
     const filterLink =
-      `${BASE_SOFTR_DIRECTORY}?filter-by-Neighborhood=${encodeURIComponent(name)}`;
+      `${ARTIST_DIRECTORY_URL}?filter-by-Neighborhood=${encodeURIComponent(name)}`;
 
     new mapboxgl.Popup()
       .setLngLat(e.lngLat)
@@ -679,6 +711,7 @@ function createLegendSection(title) {
     document.createElement('input');
 
   checkbox.type = 'checkbox';
+  checkbox.checked = organizationsVisible;
 
   const label =
     document.createElement('label');
@@ -821,7 +854,7 @@ function buildCombinedLegend() {
           document.createElement('input');
 
         checkbox.type = 'checkbox';
-
+        checkbox.checked = artistsVisible;
         checkbox.checked = true;
 
         checkbox.addEventListener(
