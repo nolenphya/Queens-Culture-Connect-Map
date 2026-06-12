@@ -309,7 +309,7 @@ const popup = new mapboxgl.Popup({ offset: 25 })
 
       ${
         imageUrl
-          ? `<img src="${Image}" style="width:100%;margin-bottom:10px;">`
+          ? `<img src="${imageUrl}" style="width:100%;margin-bottom:10px;">`
           : ''
       }
 
@@ -761,6 +761,16 @@ function createLegendSection(title) {
 // BUILD LEGEND
 // =====================================================
 
+console.log(
+  'Markers:',
+  allMarkers.length
+);
+
+console.log(
+  'Neighborhood counts:',
+  neighborhoodCounts
+);
+
 function buildCombinedLegend() {
 
   const legend =
@@ -800,6 +810,12 @@ function buildCombinedLegend() {
         });
       }
     );
+
+organizationsSection.checkbox.checked =
+  organizationsVisible;
+
+  artistsSection.checkbox.checked =
+  artistsVisible;
 
   Object.entries(organizationTagGroups)
     .sort(([a], [b]) =>
@@ -1146,4 +1162,6 @@ map.on('load', async () => {
   await loadArtistLayer();
 
   buildCombinedLegend();
+  
+
 });
