@@ -279,9 +279,14 @@ function createMarkers(data) {
 
 el.addEventListener('mouseenter', () => {
 
-  el.style.transform = 'scale(1.25)';
-  el.style.zIndex = '999';
+  el.style.transform =
+    'scale(1.25)';
 
+  el.style.zIndex =
+    '999';
+
+  map.getCanvas().style.cursor =
+    'pointer';
 });
 
 el.addEventListener('mouseleave', () => {
@@ -307,17 +312,7 @@ el.addEventListener('mouseleave', () => {
 el.style.transition =
   'transform 0.15s ease';
 
-el.addEventListener('mouseenter', () => {
 
-  el.style.transform =
-    'scale(1.25)';
-
-  el.style.zIndex =
-    '999';
-
-  map.getCanvas().style.cursor =
-    'pointer';
-});
 
 el.addEventListener('mouseleave', () => {
 
@@ -637,6 +632,11 @@ map.setLayoutProperty(
   // =====================================================
 
   map.on('click', 'artist-fill-layer', e => {
+
+const clickedMarker =
+  e.originalEvent.target.closest('.mapboxgl-marker');
+
+if (clickedMarker) return;
 
     const feature =
       e.features[0];
