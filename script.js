@@ -63,6 +63,8 @@ let visibleNeighborhoods =
 
 let artistNeighborhoodList = [];
 
+let hoveredNtaId = null;
+
 const BASE_SOFTR_DIRECTORY =
   "https://elwanda52071.softr.app";
 
@@ -275,6 +277,21 @@ function createMarkers(data) {
     const el =
       document.createElement('div');
 
+el.addEventListener('mouseenter', () => {
+
+  el.style.transform = 'scale(1.25)';
+  el.style.zIndex = '999';
+
+});
+
+el.addEventListener('mouseleave', () => {
+
+  el.style.transform = 'scale(1)';
+  el.style.transition = 'transform 0.15s ease';
+  el.style.zIndex = '';
+
+});
+
     el.style.backgroundImage =
       `url(icons/${iconKey}.png)`;
 
@@ -282,6 +299,37 @@ function createMarkers(data) {
     el.style.height = '32px';
     el.style.backgroundSize = 'contain';
     el.style.backgroundRepeat = 'no-repeat';
+
+    el.addEventListener('click', (event) => {
+  event.stopPropagation();
+});
+
+el.style.transition =
+  'transform 0.15s ease';
+
+el.addEventListener('mouseenter', () => {
+
+  el.style.transform =
+    'scale(1.25)';
+
+  el.style.zIndex =
+    '999';
+
+  map.getCanvas().style.cursor =
+    'pointer';
+});
+
+el.addEventListener('mouseleave', () => {
+
+  el.style.transform =
+    'scale(1)';
+
+  el.style.zIndex =
+    '';
+
+  map.getCanvas().style.cursor =
+    '';
+});
 
     el.style.display =
   organizationsVisible
@@ -435,6 +483,10 @@ console.log("Neighborhood counts:", neighborhoodCounts);
 
       visibleNeighborhoods.add(nta);
     }
+
+    geojson.features.forEach((feature, index) => {
+  feature.id = index;
+});
   });
 
   // =====================================================
@@ -484,10 +536,63 @@ console.log("Neighborhood counts:", neighborhoodCounts);
           30, '#08306b'
         ],
 
-        'fill-opacity': 0.75
+        'fill-opacity': [
+  'case',
+  ['boolean', ['feature-state', 'hover'], false],
+  0.95,
+  0.75
+]
       }
     });
   }
+
+  map.on('mousemove', 'artist-fill-layer', (e) => {
+
+  if (!e.features.length) return;
+
+  if (hoveredNtaId !== null) {
+
+    map.setFeatureState(
+      {
+        source: 'artists-nta',
+        id: hoveredNtaId
+      },
+      {
+        hover: false
+      }
+    );
+  }
+
+  hoveredNtaId = e.features[0].id;
+
+  map.setFeatureState(
+    {
+      source: 'artists-nta',
+      id: hoveredNtaId
+    },
+    {
+      hover: true
+    }
+  );
+});
+
+map.on('mouseleave', 'artist-fill-layer', () => {
+
+  if (hoveredNtaId !== null) {
+
+    map.setFeatureState(
+      {
+        source: 'artists-nta',
+        id: hoveredNtaId
+      },
+      {
+        hover: false
+      }
+    );
+  }
+
+  hoveredNtaId = null;
+});
 
   // =====================================================
   // OUTLINES
