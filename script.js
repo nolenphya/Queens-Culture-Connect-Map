@@ -340,7 +340,7 @@ el.addEventListener('mouseleave', () => {
       row["Org Name"] || "Unnamed";
 
     label.style.display = 'none';
-
+    label.style.pointerEvents = 'none';
     el.appendChild(label);
 
  const orgLink =
@@ -384,6 +384,10 @@ const popup = new mapboxgl.Popup({ offset: 25 })
 
     </div>
   `);
+
+el.addEventListener('click', () => {
+  console.log('MARKER CLICK:', row["Org Name"]);
+});
 
     const marker =
       new mapboxgl.Marker(el)
@@ -632,6 +636,9 @@ map.setLayoutProperty(
   // =====================================================
 
   map.on('click', 'artist-fill-layer', e => {
+
+ 
+
 
 const clickedMarker =
   e.originalEvent.target.closest('.mapboxgl-marker');
@@ -1154,4 +1161,11 @@ map.on('load', async () => {
   buildCombinedLegend();
   
 
+});
+
+document.addEventListener('click', e => {
+  console.log(
+    'CLICKED:',
+    e.target.className
+  );
 });
