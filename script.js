@@ -295,11 +295,11 @@ el.style.transition =
 
 el.addEventListener('mouseenter', () => {
 
-  el.style.transform = 'scale(1.25)';
+  el.style.transform = 'scale(1.4)';
   el.style.zIndex = '999';
 
-  el.style.filter =
-    'drop-shadow(0 0 6px rgba(0,0,0,0.4))';
+el.style.filter =
+  'drop-shadow(0 0 8px rgba(255,215,0,0.9))';
 
   map.getCanvas().style.cursor = 'pointer';
 });
@@ -581,6 +581,8 @@ map.on('mouseleave', 'artist-fill-layer', () => {
 
   hoveredNtaId = null;
 });
+
+
 
   // =====================================================
   // OUTLINES
