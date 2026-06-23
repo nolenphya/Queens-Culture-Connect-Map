@@ -293,6 +293,26 @@ function createMarkers(data) {
 el.style.transition =
   'transform 0.15s ease';
 
+el.addEventListener('mouseenter', () => {
+
+  el.style.transform = 'scale(1.25)';
+  el.style.zIndex = '999';
+
+  el.style.filter =
+    'drop-shadow(0 0 6px rgba(0,0,0,0.4))';
+
+  map.getCanvas().style.cursor = 'pointer';
+});
+
+el.addEventListener('mouseleave', () => {
+
+  el.style.transform = 'scale(1)';
+  el.style.zIndex = '';
+
+  el.style.filter = '';
+
+  map.getCanvas().style.cursor = '';
+});
 
     el.style.display =
   organizationsVisible
