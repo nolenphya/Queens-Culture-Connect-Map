@@ -277,25 +277,6 @@ function createMarkers(data) {
     const el =
       document.createElement('div');
 
-el.addEventListener('mouseenter', () => {
-
-  el.style.transform =
-    'scale(1.25)';
-
-  el.style.zIndex =
-    '999';
-
-  map.getCanvas().style.cursor =
-    'pointer';
-});
-
-el.addEventListener('mouseleave', () => {
-
-  el.style.transform = 'scale(1)';
-  el.style.transition = 'transform 0.15s ease';
-  el.style.zIndex = '';
-
-});
 
     el.style.backgroundImage =
       `url(icons/${iconKey}.png)`;
@@ -305,26 +286,13 @@ el.addEventListener('mouseleave', () => {
     el.style.backgroundSize = 'contain';
     el.style.backgroundRepeat = 'no-repeat';
 
-    el.addEventListener('click', (event) => {
-  event.stopPropagation();
-});
+   // el.addEventListener('click', (event) => {
+ // event.stopPropagation();
+//});
 
 el.style.transition =
   'transform 0.15s ease';
 
-
-
-el.addEventListener('mouseleave', () => {
-
-  el.style.transform =
-    'scale(1)';
-
-  el.style.zIndex =
-    '';
-
-  map.getCanvas().style.cursor =
-    '';
-});
 
     el.style.display =
   organizationsVisible
@@ -385,15 +353,16 @@ const popup = new mapboxgl.Popup({ offset: 25 })
     </div>
   `);
 
-el.addEventListener('click', () => {
-  console.log('MARKER CLICK:', row["Org Name"]);
-});
-
     const marker =
-      new mapboxgl.Marker(el)
-        .setLngLat([lng, lat])
-        .setPopup(popup)
-        .addTo(map);
+  new mapboxgl.Marker(el)
+    .setLngLat([lng, lat])
+    .setPopup(popup)
+    .addTo(map);
+
+el.addEventListener('click', () => {
+  //console.log('MARKER CLICK:', row["Org Name"]);
+  marker.togglePopup();
+});
 
     marker.rowData = row;
     marker.labelElement = label;
