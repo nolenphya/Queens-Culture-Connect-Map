@@ -166,6 +166,35 @@ const iconMap = {
   'Historical Society-Preservation Group': 'archive'
 };
 
+  const tagColors = {
+
+  // Blue (A/C/E)
+  'Gallery': '#0039A6',
+  // Orange (B/D/F/M)
+  'Museum/Cultural Institution': '#FF6319',
+  // Yellow (N/Q/R/W)
+  'Music Group/Vocal Ensembles': '#FCCC0A',
+  // Green (4/5/6)
+  'Community Garden': '#00933C',
+  // Red (1/2/3)
+  'Theatre': '#EE352E',
+  // Purple (7)
+  'Dance Company': '#B933AD',
+  // Teal (custom, complements MTA palette)
+  'Art Center-Studio': '#00A9B7',
+  // Dark Navy
+  'Cultural Arts Center': '#1B365D',
+  // Brown (J/Z)
+  'Historical Society-Preservation Group': '#996633',
+  // Light Green (G)
+  'Community Center': '#6CBE45',
+  // Gray (L)
+  'Multidisciplinary Arts Center': '#A7A9AC',
+  // Cyan (custom)
+  'Video-Film Company': '#00B7C7'
+};
+
+
 // =====================================================
 // FETCH ORGANIZATION DATA
 // =====================================================
@@ -297,34 +326,6 @@ img.style.transform =
 img.style.pointerEvents = 'none';
 
 el.appendChild(img);
-
-    const tagColors = {
-
-  // Blue (A/C/E)
-  'Gallery': '#0039A6',
-  // Orange (B/D/F/M)
-  'Museum/Cultural Institution': '#FF6319',
-  // Yellow (N/Q/R/W)
-  'Music Group/Vocal Ensembles': '#FCCC0A',
-  // Green (4/5/6)
-  'Community Garden': '#00933C',
-  // Red (1/2/3)
-  'Theatre': '#EE352E',
-  // Purple (7)
-  'Dance Company': '#B933AD',
-  // Teal (custom, complements MTA palette)
-  'Art Center-Studio': '#00A9B7',
-  // Dark Navy
-  'Cultural Arts Center': '#1B365D',
-  // Brown (J/Z)
-  'Historical Society-Preservation Group': '#996633',
-  // Light Green (G)
-  'Community Center': '#6CBE45',
-  // Gray (L)
-  'Multidisciplinary Arts Center': '#A7A9AC',
-  // Cyan (custom)
-  'Video-Film Company': '#00B7C7'
-};
 
   el.style.backgroundColor =
   tagColors[primaryTag] || '#444';
