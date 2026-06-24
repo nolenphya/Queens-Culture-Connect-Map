@@ -956,16 +956,7 @@ function buildCombinedLegend() {
     });
   });
 
-  const colorDot = document.createElement('span');
-
-colorDot.style.background =
-  tagColors[tag];
-
-colorDot.style.width = '12px';
-colorDot.style.height = '12px';
-colorDot.style.borderRadius = '50%';
-colorDot.style.display = 'inline-block';
-colorDot.style.marginRight = '6px';
+ 
 
   // Populate organization items
   Object.entries(organizationTagGroups)
@@ -973,7 +964,30 @@ colorDot.style.marginRight = '6px';
     .forEach(([tag, markers]) => {
       const category = document.createElement('div');
       const header = document.createElement('div');
-      header.innerHTML = `<span class="arrow">▸</span> ${tag}`;
+
+      const colorDot = document.createElement('span');
+
+      colorDot.style.background =
+      tagColors[tag] || '#666';
+
+      colorDot.style.width = '12px';
+      colorDot.style.height = '12px';
+      colorDot.style.borderRadius = '50%';
+      colorDot.style.display = 'inline-block';
+      colorDot.style.marginRight = '6px';
+
+      header.innerHTML =
+      `<span class="arrow">▸</span>`;
+
+      header.appendChild(colorDot);
+
+      const textNode =
+        document.createElement('span');
+
+      textNode.textContent = tag;
+
+      header.appendChild(textNode);
+
       header.className = 'legend-category-header';
 
       const list = document.createElement('ul');
