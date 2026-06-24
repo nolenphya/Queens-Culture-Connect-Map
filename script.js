@@ -278,13 +278,68 @@ function createMarkers(data) {
       document.createElement('div');
 
 
-    el.style.backgroundImage =
-      `url(icons/${iconKey}.png)`;
+    el.style.backgroundColor = '#007bff';
+    el.style.borderRadius = '50%';
 
-    el.style.width = '32px';
-    el.style.height = '32px';
-    el.style.backgroundSize = 'contain';
-    el.style.backgroundRepeat = 'no-repeat';
+   const img = document.createElement('img');
+
+img.src = `icons/${iconKey}.png`;
+
+img.style.width = '20px';
+img.style.height = '20px';
+
+img.style.position = 'absolute';
+img.style.top = '50%';
+img.style.left = '50%';
+img.style.transform =
+  'translate(-50%, -50%)';
+
+img.style.pointerEvents = 'none';
+
+el.appendChild(img);
+
+    const tagColors = {
+
+  // Blue (A/C/E)
+  'Gallery': '#0039A6',
+  // Orange (B/D/F/M)
+  'Museum/Cultural Institution': '#FF6319',
+  // Yellow (N/Q/R/W)
+  'Music Group/Vocal Ensembles': '#FCCC0A',
+  // Green (4/5/6)
+  'Community Garden': '#00933C',
+  // Red (1/2/3)
+  'Theatre': '#EE352E',
+  // Purple (7)
+  'Dance Company': '#B933AD',
+  // Teal (custom, complements MTA palette)
+  'Art Center-Studio': '#00A9B7',
+  // Dark Navy
+  'Cultural Arts Center': '#1B365D',
+  // Brown (J/Z)
+  'Historical Society-Preservation Group': '#996633',
+  // Light Green (G)
+  'Community Center': '#6CBE45',
+  // Gray (L)
+  'Multidisciplinary Arts Center': '#A7A9AC',
+  // Cyan (custom)
+  'Video-Film Company': '#00B7C7'
+};
+
+  el.style.backgroundColor =
+  tagColors[primaryTag] || '#444';
+
+el.style.width = '36px';
+el.style.height = '36px';
+el.style.borderRadius = '50%';
+
+el.style.backgroundColor =
+  tagColors[primaryTag] || '#666';
+
+el.style.border = '2px solid white';
+
+el.style.boxShadow =
+  '0 1px 4px rgba(0,0,0,0.35)';
 
    // el.addEventListener('click', (event) => {
  // event.stopPropagation();
@@ -900,6 +955,17 @@ function buildCombinedLegend() {
       marker.getElement().style.display = organizationsVisible ? 'block' : 'none';
     });
   });
+
+  const colorDot = document.createElement('span');
+
+colorDot.style.background =
+  tagColors[tag];
+
+colorDot.style.width = '12px';
+colorDot.style.height = '12px';
+colorDot.style.borderRadius = '50%';
+colorDot.style.display = 'inline-block';
+colorDot.style.marginRight = '6px';
 
   // Populate organization items
   Object.entries(organizationTagGroups)
