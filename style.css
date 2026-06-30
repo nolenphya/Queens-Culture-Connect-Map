@@ -87,22 +87,11 @@ body, html {
 /* Legend Panel */
 #legend-panel{
 
-    position:fixed;
+    resize: horizontal;
+    overflow: auto;
 
-    top:100px;
-    left:0;
-
-    width:320px;
-
-    height:calc(100vh - 100px);
-
-    background:white;
-
-    border-right:1px solid #ddd;
-
-    box-shadow:2px 0 8px rgba(0,0,0,.08);
-
-    z-index:20;
+    min-width:280px;
+    max-width:500px;
 
 }
 
@@ -514,10 +503,11 @@ background: none;
   position: absolute;
   bottom: 30px;
   left: 20px;
-  background: rgba(255, 255, 255, 0.9);
+  background: white;
   padding: 12px;
   border-radius: 6px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  box-shadow:none;
+  border-right:1px solid #e6e6e6;
   z-index: 10;
   font-family: Arial, Helvetica, sans-serif;
   max-width: 200px;
@@ -576,7 +566,7 @@ background: none;
 
 
 .legend-section {
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #e6e6e6;
   margin-bottom: 14px;
   padding-bottom: 12px;
 }
