@@ -6,13 +6,18 @@ body, html {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-#map {
-  margin-top: 80px; /* Matches header height */
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 100%;
-  z-index: 1;
+#map{
+
+    position:fixed;
+
+    top:100px;
+
+    left:320px;
+
+    width:calc(100% - 320px);
+
+    height:calc(100vh - 100px);
+
 }
 
 /* Intro Overlay */
@@ -80,18 +85,25 @@ body, html {
 }
 
 /* Legend Panel */
-#legend-panel {
-  position: absolute;
-  top: 110px;
-  left: 10px;
-  z-index: 10;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-  max-height: 60vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+#legend-panel{
+
+    position:fixed;
+
+    top:100px;
+    left:0;
+
+    width:320px;
+
+    height:calc(100vh - 100px);
+
+    background:white;
+
+    border-right:1px solid #ddd;
+
+    box-shadow:2px 0 8px rgba(0,0,0,.08);
+
+    z-index:20;
+
 }
 
 /* Collapsed state */
@@ -297,14 +309,16 @@ background: none;
   color: #333;
 }
 
-#site-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: white;
-  padding: 10px 20px;
-  z-index: 1001;
-  position: relative;
+#site-header{
+
+    height:100px;
+
+    display:flex;
+
+    align-items:center;
+
+    padding:0 30px;
+
 }
 
 .header-left {
@@ -349,7 +363,7 @@ background: none;
 
 
 .marker-label {
-  pointer-events: auto;
+  pointer-events: none;
   font-family: Arial, Helvetica, sans-serif;
 }
 
