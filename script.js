@@ -1321,47 +1321,65 @@ map.on('zoom', () => {
 
 
 // =====================================================
-// PHASE 1 UI
+// PHASE 1 UI & WINDOW HANDLERS (CLEANED UP)
 // =====================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-
-    const sidePanel = document.getElementById("side-panel");
-    const panelToggle = document.getElementById("panel-toggle");
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebar-toggle");
     const searchInput = document.getElementById("search-input");
+    const infoButton = document.getElementById("info-button");
+    const closeGuide = document.getElementById("map-guide-close");
+    const guideOverlay = document.getElementById("map-guide-overlay");
 
     // -----------------------------------------
-    // Collapse / Expand
+    // Panel Collapse / Expand Controls
     // -----------------------------------------
-
-    panelToggle.addEventListener("click", () => {
-
-        sidePanel.classList.toggle("collapsed");
-
-        if (sidePanel.classList.contains("collapsed")) {
-
-            panelToggle.innerHTML = "☰";
-
-        } else {
-
-            panelToggle.innerHTML = "←";
-
-        }
-
+    sidebarToggle.addEventListener("click", () => {
+        const isCollapsed = sidebar.classList.toggle("collapsed");
+        sidebarToggle.innerHTML = isCollapsed ? "☰" : "←";
     });
 
-    // -----------------------------------------
-    // Automatically expand when searching
-    // -----------------------------------------
-
+    // Automatically expand card when typing in search
     searchInput.addEventListener("focus", () => {
-
-        sidePanel.classList.remove("collapsed");
-        panelToggle.innerHTML = "←";
-
+        if (sidebar.classList.contains("collapsed")) {
+            sidebar.classList.remove("collapsed");
+            sidebarToggle.innerHTML = "←";
+        }
     });
 
+    // -----------------------------------------
+    // About Guide Overlay Modal
+    // -----------------------------------------
+    infoButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        guideOverlay.style.display = "flex";
+    });
+
+    closeGuide.addEventListener("click", () => {
+        guideOverlay.style.display = "none";
+    });
+
+    // Close window if clicked on background blur environment
+    guideOverlay.addEventListener("click", (e) => {
+        if (e.target === guideOverlay) {
+            guideOverlay.style.display = "none";
+        }
+    });
 });
+
+// Close interactive bottom card on mobile when user repositions map
+map.on("click", () => {
+    if (window.innerWidth < 768) {
+        const sidebar = document.getElementById("sidebar");
+        const sidebarToggle = document.getElementById("sidebar-toggle");
+        if (sidebar && !sidebar.classList.contains("collapsed")) {
+            sidebar.classList.add("collapsed");
+            sidebarToggle.innerHTML = "☰";
+        }
+    }
+});
+
 
 // =====================================================
 // LOAD EVERYTHING
