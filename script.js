@@ -863,94 +863,58 @@ function loadSubwayLayers() {
 // =====================================================
 
 function createLegendSection(title) {
+  const section = document.createElement('div');
+  section.className = 'legend-section';
 
-  const section =
-    document.createElement('div');
+  const header = document.createElement('div');
+  header.className = 'legend-section-header legend-main-header';
 
-  section.className =
-    'legend-section';
-
-  const header =
-    document.createElement('div');
-
-  header.className =
-    'legend-section-header';
-
-  const arrow =
-    document.createElement('span');
-
+  const arrow = document.createElement('span');
+  arrow.className = 'legend-arrow';
   arrow.textContent = '▶';
 
-  const checkbox =
-    document.createElement('input');
-
+  const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
-  checkbox.checked = organizationsVisible;
+  checkbox.checked = true;
 
-  const label =
-    document.createElement('label');
-
+  const label = document.createElement('label');
   label.textContent = title;
 
-  const content =
-    document.createElement('div');
-
-  content.className =
-    'legend-section-content collapsed';
+  const content = document.createElement('div');
+  // Start collapsed natively by max-height rather than display:none
+  content.className = 'legend-section-content';
+  content.style.maxHeight = '0px'; 
+  content.style.overflow = 'hidden';
+  content.style.transition = 'max-height 0.35s ease';
 
   header.appendChild(arrow);
   header.appendChild(checkbox);
   header.appendChild(label);
-
-header.classList.add(
-    "legend-main-header"
-);
-
-function animateLegendOpen(content){
-
-    content.style.maxHeight =
-        content.scrollHeight + "px";
-
-}
-
-function animateLegendClose(content){
-
-    content.style.maxHeight =
-        "0px";
-
-}
-
   section.appendChild(header);
   section.appendChild(content);
 
   header.addEventListener('click', e => {
-
-    if (
-      e.target.tagName.toLowerCase()
-      === 'input'
-    ) {
+    // Prevent collapsing the accordion if the user just clicked the checkbox
+    if (e.target.tagName.toLowerCase() === 'input') {
       return;
     }
 
-    content.classList.toggle(
-      'collapsed'
-    );
-
-const collapsed =
-    content.classList.toggle(
-        "collapsed"
-    );
-
-if(collapsed){
-
-    animateLegendClose(content);
-
-}else{
-
-    animateLegendOpen(content);
-
-}
+    const isCollapsed = content.style.maxHeight === '0px' || content.style.maxHeight === '';
+    
+    if (isCollapsed) {
+      arrow.textContent = '▼';
+      content.style.maxHeight = content.scrollHeight + "px";
+      // Handle variable height if inner sub-menus open later
+      setTimeout(() => { content.style.maxHeight = 'none'; }, 350);
+    } else {
+      arrow.textContent = '▶';
+      content.style.maxHeight = content.scrollHeight + "px";
+      reflow(); // force layout calculation
+      content.style.maxHeight = "0px";
+    }
   });
+
+  function reflow() { content.offsetHeight; }
 
   return {
     section,
@@ -1007,9 +971,14 @@ const organizationsSection =
   // Sync the master toggle state
   organizationsSection.checkbox.checked = organizationsVisible;
 
-  organizationsSection.checkbox.addEventListener('change', e => {
-    organizationsVisible =
-    e.target.checked;
+   organizationsSection.checkbox.addEventListener('change', e => {
+    organizationsVisible = e.target.checked;
+
+    // 1. Forcefully update all nested item checkboxes in the DOM
+    organizationsSection.content.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.checked = organizationsVisible;
+    });
+
 
 if(organizationsVisible){
 
@@ -1023,6 +992,7 @@ if(organizationsVisible){
     );
 
 }
+     // 2. Map visibility
     allMarkers.forEach(marker => {
       marker.getElement().style.display = organizationsVisible ? 'block' : 'none';
     });
@@ -1123,28 +1093,31 @@ const artistsSection =
   artistsSection.checkbox.checked = artistsVisible;
 
   artistsSection.checkbox.addEventListener('change', e => {
-    artistsVisible =
-    e.target.checked;
+    artistsVisible = e.target.checked;
 
-if(organizationsVisible){
+    // 1. Forcefully update all nested neighborhood checkboxes in the DOM
+    artistsSection.content.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.checked = artistsVisible;
+      
+      // Update our internal tracking Set
+      const neighborhoodName = cb.nextElementSibling.firstChild.textContent.trim();
+      if (artistsVisible) {
+        visibleNeighborhoods.add(neighborhoodName);
+      } else {
+        visibleNeighborhoods.delete(neighborhoodName);
+      }
+    });
 
-    artistsSection
-        .content
-        .classList
-        .remove("collapsed");
-
-    animateLegendOpen(
-        artistsSection.content
-    );
-
-}
+    // 2. Map visibility
     const visibility = artistsVisible ? 'visible' : 'none';
-
     map.setLayoutProperty('artist-fill-layer', 'visibility', visibility);
     map.setLayoutProperty('artist-outline-layer', 'visibility', visibility);
+    
+    updateNeighborhoodFilters();
   });
 
   // Populate artist neighborhood filters
+ // Populate artist neighborhood filters
   artistNeighborhoodList
     .sort()
     .forEach(neighborhood => {
@@ -1164,18 +1137,40 @@ if(organizationsVisible){
         updateNeighborhoodFilters();
       });
 
-      const label = document.createElement('label');
-      label.innerHTML = `
-${neighborhood}
+      // Turn the label text into an Apple-style action link
+      const labelLink = document.createElement('span');
+      labelLink.className = 'legend-link';
+      labelLink.style.marginLeft = '4px';
+      labelLink.innerHTML = `${neighborhood} <span class="legend-count">(${neighborhoodCounts[neighborhood]})</span>`;
 
-<span
-class="legend-count">
-(${neighborhoodCounts[neighborhood]})
-</span>
-`;
+      // Click to fly/zoom straight to the neighborhood boundary
+      labelLink.addEventListener('click', () => {
+        const features = map.queryRenderedFeatures({ layers: ['artist-fill-layer'] });
+        const match = features.find(f => f.properties.ntaname === neighborhood);
+        
+        if (match) {
+          // Calculate center or use event location coordinates if available
+          // For a clean implementation, fly to the feature coordinates directly
+          const bounds = new mapboxgl.LngLatBounds();
+          
+          if (match.geometry.type === 'Polygon') {
+            match.geometry.coordinates[0].forEach(coord => bounds.extend(coord));
+          } else if (match.geometry.type === 'MultiPolygon') {
+            match.geometry.coordinates.forEach(poly => {
+              poly[0].forEach(coord => bounds.extend(coord));
+            });
+          }
+          
+          map.fitBounds(bounds, {
+            padding: 80,
+            maxZoom: 14,
+            duration: 1200
+          });
+        }
+      });
 
       row.appendChild(checkbox);
-      row.appendChild(label);
+      row.appendChild(labelLink);
       artistsSection.content.appendChild(row);
     });
 }
