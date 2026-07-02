@@ -902,6 +902,24 @@ function createLegendSection(title) {
   header.appendChild(checkbox);
   header.appendChild(label);
 
+header.classList.add(
+    "legend-main-header"
+);
+
+function animateLegendOpen(content){
+
+    content.style.maxHeight =
+        content.scrollHeight + "px";
+
+}
+
+function animateLegendClose(content){
+
+    content.style.maxHeight =
+        "0px";
+
+}
+
   section.appendChild(header);
   section.appendChild(content);
 
@@ -918,10 +936,20 @@ function createLegendSection(title) {
       'collapsed'
     );
 
-    arrow.textContent =
-      content.classList.contains('collapsed')
-        ? '▶'
-        : '▼';
+const collapsed =
+    content.classList.toggle(
+        "collapsed"
+    );
+
+if(collapsed){
+
+    animateLegendClose(content);
+
+}else{
+
+    animateLegendOpen(content);
+
+}
   });
 
   return {
@@ -950,20 +978,51 @@ console.log(
 // =====================================================
 
 function buildCombinedLegend() {
-  const legend = document.getElementById('legend-content');
-  legend.innerHTML = '';
+  const legend =
+    document.getElementById("legend-content");
+
+legend.innerHTML = "";
+
+const title = document.createElement("div");
+title.className = "layers-title";
+
+title.innerHTML = `
+    <span>☰</span>
+    <span>Layers</span>
+`;
+
+legend.appendChild(title);
 
   // =====================================================
   // ORGANIZATIONS SECTION
   // =====================================================
-  const organizationsSection = createLegendSection('Organizations');
+  const orgCount = allMarkers.length;
+
+const organizationsSection =
+    createLegendSection(
+        `Organizations (${orgCount})`
+    );
   legend.appendChild(organizationsSection.section);
 
   // Sync the master toggle state
   organizationsSection.checkbox.checked = organizationsVisible;
 
   organizationsSection.checkbox.addEventListener('change', e => {
-    organizationsVisible = e.target.checked;
+    organizationsVisible =
+    e.target.checked;
+
+if(organizationsVisible){
+
+    organizationsSection
+        .content
+        .classList
+        .remove("collapsed");
+
+    animateLegendOpen(
+        organizationsSection.content
+    );
+
+}
     allMarkers.forEach(marker => {
       marker.getElement().style.display = organizationsVisible ? 'block' : 'none';
     });
@@ -1047,14 +1106,38 @@ function buildCombinedLegend() {
   // =====================================================
   // ARTISTS SECTION
   // =====================================================
-  const artistsSection = createLegendSection('Artists');
+const artistTotal =
+    Object.values(neighborhoodCounts)
+        .reduce(
+            (a,b)=>a+b,
+            0
+        );
+
+const artistsSection =
+    createLegendSection(
+        `Artists (${artistTotal})`
+    );
   legend.appendChild(artistsSection.section);
 
   // Sync the master toggle state safely now that it is declared
   artistsSection.checkbox.checked = artistsVisible;
 
   artistsSection.checkbox.addEventListener('change', e => {
-    artistsVisible = e.target.checked;
+    artistsVisible =
+    e.target.checked;
+
+if(organizationsVisible){
+
+    artistsSection
+        .content
+        .classList
+        .remove("collapsed");
+
+    animateLegendOpen(
+        artistsSection.content
+    );
+
+}
     const visibility = artistsVisible ? 'visible' : 'none';
 
     map.setLayoutProperty('artist-fill-layer', 'visibility', visibility);
@@ -1082,7 +1165,14 @@ function buildCombinedLegend() {
       });
 
       const label = document.createElement('label');
-      label.textContent = neighborhood;
+      label.innerHTML = `
+${neighborhood}
+
+<span
+class="legend-count">
+(${neighborhoodCounts[neighborhood]})
+</span>
+`;
 
       row.appendChild(checkbox);
       row.appendChild(label);
