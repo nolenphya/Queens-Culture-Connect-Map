@@ -871,7 +871,7 @@ function createLegendSection(title) {
 
   const arrow = document.createElement('span');
   arrow.className = 'legend-arrow';
-  arrow.textContent = '▶';
+  arrow.textContent = '▼'; // Default to down arrow
 
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
@@ -883,7 +883,7 @@ function createLegendSection(title) {
   const content = document.createElement('div');
   // Start collapsed natively by max-height rather than display:none
   content.className = 'legend-section-content';
-  content.style.maxHeight = '0px'; 
+  content.style.maxHeight = 'none'; 
   content.style.overflow = 'hidden';
   content.style.transition = 'max-height 0.35s ease';
 
@@ -1381,25 +1381,19 @@ map.on("click", () => {
 // =====================================================
 
 map.on('load', async () => {
-
-  loadSubwayLayers();
-
-  const records =
-    await fetchData();
-
-  const orgData =
-    records.map(r => ({
-      id: r.id,
-      ...r.fields
-    }));
+  // 1. Fetch data and build the background polygon visualizer layers first
+  const records = await fetchData();
+  const orgData = records.map(r => ({
+    id: r.id,
+    ...r.fields
+  }));
 
   createMarkers(orgData);
-
   await loadArtistLayer();
-
   buildCombinedLegend();
-  
 
+  // 2. Load subway layers LAST so they are drawn on top of the neighborhood polygons
+  loadSubwayLayers(); 
 });
 
 map.on("click", () => {
