@@ -19,6 +19,16 @@ map.addControl(
   'top-right'
 );
 
+// Smooth zooming
+
+map.scrollZoom.setWheelZoomRate(1 / 450);
+map.scrollZoom.setZoomRate(1 / 150);
+
+// smoother feel
+
+map.dragPan.enable();
+map.touchZoomRotate.enable();
+
 // =====================================================
 // AIRTABLE SETUP
 // =====================================================
@@ -347,27 +357,29 @@ el.style.boxShadow =
 //});
 
 el.style.transition =
-  'transform 0.15s ease';
+    "transform .18s ease, filter .18s ease";
 
 el.addEventListener('mouseenter', () => {
 
-  el.style.transform = 'scale(1.4)';
-  el.style.zIndex = '999';
+    el.style.transform =
+        'translateY(-4px) scale(1.18)';
 
-el.style.filter =
-  'drop-shadow(0 0 8px rgba(255,215,0,0.9))';
+    el.style.filter =
+        'drop-shadow(0 8px 18px rgba(0,0,0,.25))';
 
-  map.getCanvas().style.cursor = 'pointer';
+    el.style.zIndex = 999;
+
 });
 
 el.addEventListener('mouseleave', () => {
 
-  el.style.transform = 'scale(1)';
-  el.style.zIndex = '';
+    el.style.transform =
+        'translateY(0) scale(1)';
 
-  el.style.filter = '';
+    el.style.filter = 'none';
 
-  map.getCanvas().style.cursor = '';
+    el.style.zIndex = '';
+
 });
 
     el.style.display =
@@ -1157,11 +1169,19 @@ document
         'click',
         () => {
 
-          map.flyTo({
-            center:
-              marker.getLngLat(),
-            zoom: 15
-          });
+         map.flyTo({
+
+    center: marker.getLngLat(),
+
+    zoom:15,
+
+    speed:.8,
+
+    curve:1.45,
+
+    essential:true
+
+});
 
           marker.togglePopup();
         }
@@ -1209,6 +1229,50 @@ map.on('zoom', () => {
   }
 });
 
+
+// =====================================================
+// PHASE 1 UI
+// =====================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const sidePanel = document.getElementById("side-panel");
+    const panelToggle = document.getElementById("panel-toggle");
+    const searchInput = document.getElementById("search-input");
+
+    // -----------------------------------------
+    // Collapse / Expand
+    // -----------------------------------------
+
+    panelToggle.addEventListener("click", () => {
+
+        sidePanel.classList.toggle("collapsed");
+
+        if (sidePanel.classList.contains("collapsed")) {
+
+            panelToggle.innerHTML = "☰";
+
+        } else {
+
+            panelToggle.innerHTML = "←";
+
+        }
+
+    });
+
+    // -----------------------------------------
+    // Automatically expand when searching
+    // -----------------------------------------
+
+    searchInput.addEventListener("focus", () => {
+
+        sidePanel.classList.remove("collapsed");
+        panelToggle.innerHTML = "←";
+
+    });
+
+});
+
 // =====================================================
 // LOAD EVERYTHING
 // =====================================================
@@ -1232,6 +1296,22 @@ map.on('load', async () => {
 
   buildCombinedLegend();
   
+
+});
+
+map.on("click", () => {
+
+    if (window.innerWidth < 900) {
+
+        document
+            .getElementById("side-panel")
+            .classList.add("collapsed");
+
+        document
+            .getElementById("panel-toggle")
+            .innerHTML = "☰";
+
+    }
 
 });
 
