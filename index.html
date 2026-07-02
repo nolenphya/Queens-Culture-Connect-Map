@@ -1,74 +1,168 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Queens Arts & Culture Map</title>
-
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-
-  <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet"/>
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
-
-  <link rel="stylesheet" href="style.css" />
-</head>
-
 <body>
 
-<header id="site-header">
-  <div class="header-left">
-    <img src="fthlogo.png" alt="Flushing Town Hall Logo" id="fth-logo">
-    <h1>The Queens Arts and Culture Map</h1>
-  </div>
-</header>
+    <!-- ===========================================
+    HEADER
+    ============================================ -->
 
-  <div id="intro-overlay">
-    <div class="intro-content">
-      <h2>Welcome to the Queens Arts and Culture Map</h2>
-      <p>
-        In 2024, Flushing Town Hall was invited by the New York State Council on the Arts (NYSCA) to lead The Queens Cultural Mapping Initiative, designed to document the rich and diverse artistic landscape of Queens.
-      </p>
-      <div style="display: inline-block;">
-        <a href="https://airtable.com/apppBx0a9hj0Z1ciw/pagkf63IaBt2wJvFo/form" target="_blank">
-          <button id="add-info" style="background-color: black; color: white;">Join the Map</button>
-        </a>
-        <button id="close-intro" style="background-color: black; color: white;">Explore the Map</button>
-      </div>
+    <header id="app-header">
+
+        <div class="header-left">
+
+            <img
+                src="images/fth-logo.png"
+                id="logo"
+                alt="Flushing Town Hall Logo"
+            >
+
+            <div class="header-text">
+
+                <h1>Queens Arts Map</h1>
+
+                <p>
+                    Discover Organizations, Artists &
+                    Opportunities Across Queens
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="header-right">
+
+            <button id="info-button">
+                About
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- ===========================================
+    LEFT SIDEBAR
+    ============================================ -->
+
+    <aside id="sidebar">
+
+        <!-- Search -->
+
+        <div class="sidebar-section">
+
+            <input
+                id="search-input"
+                type="text"
+                placeholder="Search organizations..."
+            >
+
+            <div id="search-results"></div>
+
+        </div>
+
+
+        <!-- Legend -->
+
+        <div class="sidebar-section">
+
+            <div class="section-title">
+
+                Explore
+
+            </div>
+
+            <div id="legend-content">
+
+                <!-- JS Builds Entire Legend -->
+
+            </div>
+
+        </div>
+
+
+    </aside>
+
+
+    <!-- ===========================================
+    MAP
+    ============================================ -->
+
+    <main id="map-container">
+
+        <div id="map"></div>
+
+    </main>
+
+
+
+    <!-- ===========================================
+    Floating Sidebar Collapse Button
+    ============================================ -->
+
+    <button id="sidebar-toggle">
+
+        ☰
+
+    </button>
+
+
+
+    <!-- ===========================================
+    ABOUT WINDOW
+    ============================================ -->
+
+    <div id="map-guide-overlay">
+
+        <div class="guide-window">
+
+            <button id="map-guide-close">
+
+                ✕
+
+            </button>
+
+            <h2>
+
+                Queens Arts Map
+
+            </h2>
+
+            <p>
+
+                The Queens Arts Map connects residents,
+                visitors, artists and organizations across
+                Queens through an interactive cultural map.
+
+            </p>
+
+            <p>
+
+                • Search organizations
+
+                <br>
+
+                • Browse artists by neighborhood
+
+                <br>
+
+                • Explore opportunities
+
+                <br>
+
+                • Discover nearby transit
+
+            </p>
+
+        </div>
+
     </div>
-  </div>
 
-  <div id="map"></div>
 
-  <div id="choropleth-legend" class="custom-map-overlay"></div>
 
-  <button id="info-button" title="Info">ℹ️</button>
+    <!-- ===========================================
+    Scripts
+    ============================================ -->
 
-  <div id="legend-panel">
-    <div id="legend-handle"></div>
-    <div class="legend-header">
-      <button id="reset-legend">Reset View</button>
-      <button id="legend-toggle" title="Collapse Legend">Hide</button>
-    </div>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
 
-    <div id="address-search">
-      <label for="search-input">Search the directory:</label>
-      <input type="text" id="search-input" placeholder="Search by name or tag..." />
-    
-      <div id="search-results"></div>
-    
+    <script src="script.js"></script>
 
-      <div id="search-results" style="margin-top: 10px;"></div>
-    </div>
-
-    <div id="legend-wrapper">
-      <div id="legend-content">
-        <div id="layer-toggles" style="margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px;"></div>
-        <div id="legend"></div>
-      </div>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
 </body>
-</html>
