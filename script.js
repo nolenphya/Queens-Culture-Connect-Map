@@ -971,7 +971,7 @@ const organizationsSection =
   // Sync the master toggle state
   organizationsSection.checkbox.checked = organizationsVisible;
 
-   organizationsSection.checkbox.addEventListener('change', e => {
+  organizationsSection.checkbox.addEventListener('change', e => {
     organizationsVisible = e.target.checked;
 
     // 1. Forcefully update all nested item checkboxes in the DOM
@@ -979,25 +979,11 @@ const organizationsSection =
       cb.checked = organizationsVisible;
     });
 
-
-if(organizationsVisible){
-
-    organizationsSection
-        .content
-        .classList
-        .remove("collapsed");
-
-    animateLegendOpen(
-        organizationsSection.content
-    );
-
-}
-     // 2. Map visibility
+    // 2. Map marker visibility toggle
     allMarkers.forEach(marker => {
       marker.getElement().style.display = organizationsVisible ? 'block' : 'none';
     });
   });
-
  
 
   // Populate organization items
@@ -1092,28 +1078,22 @@ const artistsSection =
   // Sync the master toggle state safely now that it is declared
   artistsSection.checkbox.checked = artistsVisible;
 
-  artistsSection.checkbox.addEventListener('change', e => {
+artistsSection.checkbox.addEventListener('change', e => {
     artistsVisible = e.target.checked;
 
-    // 1. Forcefully update all nested neighborhood checkboxes in the DOM
+    // 1. Synchronize nested neighborhood UI checkboxes visually
     artistsSection.content.querySelectorAll('input[type="checkbox"]').forEach(cb => {
       cb.checked = artistsVisible;
-      
-      // Update our internal tracking Set
-      const neighborhoodName = cb.nextElementSibling.firstChild.textContent.trim();
-      if (artistsVisible) {
-        visibleNeighborhoods.add(neighborhoodName);
-      } else {
-        visibleNeighborhoods.delete(neighborhoodName);
-      }
     });
 
-    // 2. Map visibility
+    // 2. Simply switch layer visibility; don't wipe out the Mapbox filters
     const visibility = artistsVisible ? 'visible' : 'none';
-    map.setLayoutProperty('artist-fill-layer', 'visibility', visibility);
-    map.setLayoutProperty('artist-outline-layer', 'visibility', visibility);
-    
-    updateNeighborhoodFilters();
+    if (map.getLayer('artist-fill-layer')) {
+      map.setLayoutProperty('artist-fill-layer', 'visibility', visibility);
+    }
+    if (map.getLayer('artist-outline-layer')) {
+      map.setLayoutProperty('artist-outline-layer', 'visibility', visibility);
+    }
   });
 
   // Populate artist neighborhood filters
@@ -1394,22 +1374,6 @@ map.on('load', async () => {
 
   // 2. Load subway layers LAST so they are drawn on top of the neighborhood polygons
   loadSubwayLayers(); 
-});
-
-map.on("click", () => {
-
-    if (window.innerWidth < 900) {
-
-        document
-            .getElementById("side-panel")
-            .classList.add("collapsed");
-
-        document
-            .getElementById("panel-toggle")
-            .innerHTML = "☰";
-
-    }
-
 });
 
 document.addEventListener('click', e => {
