@@ -190,6 +190,21 @@ DYNAMIC LAYERS / LEGEND
     transition: max-height 0.3s ease-out;
 }
 
+/* Custom spacing for the nested organization items */
+.legend-section-content ul {
+    list-style: none;
+    padding-left: 12px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+.legend-section-content ul li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0; /* Adjust this value up or down to change the vertical gap spacing */
+}
+
 .legend-category-header {
     font-size: 13px;
     font-weight: 500;

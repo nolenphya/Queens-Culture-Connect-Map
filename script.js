@@ -1124,13 +1124,12 @@ artistsSection.checkbox.addEventListener('change', e => {
       labelLink.innerHTML = `${neighborhood} <span class="legend-count">(${neighborhoodCounts[neighborhood]})</span>`;
 
       // Click to fly/zoom straight to the neighborhood boundary
+      // Click to fly/zoom straight to the neighborhood boundary and open its popup
       labelLink.addEventListener('click', () => {
         const features = map.queryRenderedFeatures({ layers: ['artist-fill-layer'] });
         const match = features.find(f => f.properties.ntaname === neighborhood);
         
         if (match) {
-          // Calculate center or use event location coordinates if available
-          // For a clean implementation, fly to the feature coordinates directly
           const bounds = new mapboxgl.LngLatBounds();
           
           if (match.geometry.type === 'Polygon') {
@@ -1141,11 +1140,35 @@ artistsSection.checkbox.addEventListener('change', e => {
             });
           }
           
+          // 1. Frame the neighborhood boundaries cleanly
           map.fitBounds(bounds, {
             padding: 80,
             maxZoom: 14,
             duration: 1200
           });
+
+          // 2. Generate and display the neighborhood popup right at the geometric center of those boundaries
+          const name = match.properties.ntaname;
+          const count = match.properties.artist_count || 0;
+          const filterLink = `${ARTIST_DIRECTORY_URL}?filter-by-Neighborhood=${encodeURIComponent(name)}`;
+
+          new mapboxgl.Popup()
+            .setLngLat(bounds.getCenter())
+            .setHTML(`
+              <div style="max-width:220px;">
+                <h3>${name}</h3>
+                <p>
+                  ${count} artist${count === 1 ? '' : 's'}
+                </p>
+                <a
+                  href="${filterLink}"
+                  target="_blank"
+                >
+                  View Artists
+                </a>
+              </div>
+            `)
+            .addTo(map);
         }
       });
 
