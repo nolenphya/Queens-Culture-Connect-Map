@@ -1147,28 +1147,37 @@ artistsSection.checkbox.addEventListener('change', e => {
             duration: 1200
           });
 
-          // 2. Generate and display the neighborhood popup right at the geometric center of those boundaries
-          const name = match.properties.ntaname;
-          const count = match.properties.artist_count || 0;
-          const filterLink = `${ARTIST_DIRECTORY_URL}?filter-by-Neighborhood=${encodeURIComponent(name)}`;
+       // 1. Identify the neighborhood name from your Mapbox property
+const name = match.properties.ntaname;
+const count = match.properties.artist_count || 0;
 
-          new mapboxgl.Popup()
-            .setLngLat(bounds.getCenter())
-            .setHTML(`
-              <div style="max-width:220px;">
-                <h3>${name}</h3>
-                <p>
-                  ${count} artist${count === 1 ? '' : 's'}
-                </p>
-                <a
-                  href="${filterLink}"
-                  target="_blank"
-                >
-                  View Artists
-                </a>
-              </div>
-            `)
-            .addTo(map);
+/* ==========================================================
+   UPDATED AIRTABLE LINK LOGIC
+   ========================================================== */
+// Change the URL query key to target your Airtable formula column 'NTA_Map'
+const filterLink = `${ARTIST_DIRECTORY_URL}?filter-by-NTA_Map=${encodeURIComponent(name)}`;
+
+// 2. Pass this updated link directly into your Popup HTML template string
+new mapboxgl.Popup()
+  .setLngLat(bounds.getCenter())
+  .setHTML(`
+    <div style="max-width:220px; font-family: 'IBM Plex Sans', sans-serif;">
+      <h3 style="margin-bottom: 6px; font-size: 15px; font-weight: 600;">${name}</h3>
+      <p style="margin-bottom: 10px; color: #48484a; font-size: 13px;">
+        ${count} artist${count === 1 ? '' : 's'}
+      </p>
+      <a
+        href="${filterLink}"
+        target="_blank"
+        style="color: #0071e3; font-weight: 600; text-decoration: none; font-size: 13px;"
+        onmouseover="this.style.textDecoration='underline'"
+        onmouseout="this.style.textDecoration='none'"
+      >
+        View Artists
+      </a>
+    </div>
+  `)
+  .addTo(map);
         }
       });
 
