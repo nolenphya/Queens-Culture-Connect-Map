@@ -19,6 +19,15 @@ map.addControl(
   'top-right'
 );
 
+// Create an Apple-style Scale Control
+const scale = new mapboxgl.ScaleControl({
+  maxWidth: 100,      // Keep it compact, matching Apple's minimal look
+  unit: 'imperial'    // Displays feet ('ft') and miles ('mi')
+});
+
+// Add it to the bottom-right corner of the canvas
+map.addControl(scale, 'bottom-right');
+
 // Smooth zooming
 
 map.scrollZoom.setWheelZoomRate(1 / 450);

@@ -240,6 +240,51 @@ input[type="checkbox"] {
     text-decoration: underline;
 }
 
+
+/* ==========================================================
+   APPLE MAPS UI - SCALE CONTROL
+   ========================================================== */
+
+/* Outer container positioning and system font styling */
+.mapboxgl-ctrl-scale {
+    font-family: 'IBM Plex Sans', -apple-system, sans-serif;    font-size: 10px;
+    font-weight: 500;
+    color: #1c1c1e; /* iOS Dark Text */
+    background-color: rgba(255, 255, 255, 0.75) !important; /* iOS Vibrant Light vibrancy */
+    backdrop-filter: blur(10px) saturate(190%); /* Apple glassmorphic blur */
+    -webkit-backdrop-filter: blur(10px) saturate(190%);
+    border: none !important;
+    border-bottom: 1.5px solid #1c1c1e !important; /* Elegant hairline marker */
+    border-left: 1.5px solid #1c1c1e !important;   /* Left anchor edge */
+    border-right: 1.5px solid #1c1c1e !important;  /* Right anchor edge */
+    border-radius: 0px !important;                 /* Sharp corners for scale bar */
+    padding: 1px 5px 3px 5px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);      /* Minimal float shadow */
+    text-align: center;
+    box-sizing: border-box;
+    pointer-events: none; /* Keep it strictly informational, won't capture clicks */
+    transition: width 0.15s ease-out; /* Smoothly scales when zooming */
+}
+
+/* Adjust the bottom-right placement to play nice with other floating UI elements */
+.mapboxgl-ctrl-bottom-right {
+    right: 16px !important;
+    bottom: 16px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px; /* Clean separation from copyright attribution */
+}
+
+/* Dark mode fallback compatibility if your base map goes dark */
+@media (prefers-color-scheme: dark) {
+    .mapboxgl-ctrl-scale {
+        color: #f5f5f7;
+        background-color: rgba(30, 30, 30, 0.7) !important;
+        border-color: #f5f5f7 !important;
+    }
+}
+
 /* ==========================================================
 MINIMALIST PANEL TOGGLE BUTTON
 ========================================================== */
