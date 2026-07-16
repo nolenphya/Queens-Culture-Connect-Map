@@ -19,9 +19,6 @@ map.addControl(
   'top-right'
 );
 
-// Create an Apple-style Scale Control
-// Add it to the bottom-right corner of the canvas
-map.addControl(scale, 'bottom-right');
 
 // Smooth zooming
 
@@ -1401,6 +1398,11 @@ map.on("click", () => {
 // BOTTOM-RIGHT MAP CONTROLS
 // =====================================================
 // 1. Define the Custom Choropleth Control Class (Keep this!)
+// =====================================================
+// INITIALIZATION AND BOTTOM-RIGHT MAP CONTROLS
+// =====================================================
+
+// 1. Define the Custom Choropleth Control Class
 class ChoroplethLegendControl {
   onAdd(map) {
     this._container = document.createElement('div');
@@ -1422,16 +1424,46 @@ class ChoroplethLegendControl {
   }
 }
 
-// 2. Declare the scale variable ONLY ONCE
-const scale = new mapboxgl.ScaleControl({
-  maxWidth: 100,
-  unit: 'imperial'
-});
-map.addControl(scale, 'bottom-right');
+// 2. Wait for the map to load before initializing data layers and adding controls
+map.on('load', async () => {
+  // Add the Apple-style Scale Control
+  const scale = new mapboxgl.ScaleControl({
+    maxWidth: 100,
+    unit: 'imperial'
+  });
+  map.addControl(scale, 'bottom-right');
 
-// 3. Add the Choropleth Control (it will stack nicely on top of the scale bar)
-const choroplethLegend = new ChoroplethLegendControl();
-map.addControl(choroplethLegend, 'bottom-right');
+  // Add the Choropleth Legend (stacks cleanly on top of the scale bar)
+  const choroplethLegend = new ChoroplethLegendControl();
+  map.addControl(choroplethLegend, 'bottom-right');
+
+  try {
+    // Load subway lines and stop markers
+    loadSubwayLayers();
+
+    // Fetch and draw organizations from Airtable
+    const orgData = await fetchData();
+    createMarkers(orgData);
+
+    // Fetch and draw neighborhood choropleth shapes
+    await loadArtistLayer();
+
+    // Build the accordion legend in the sidebar panel
+    buildCombinedLegend();
+  } catch (error) {
+    console.error("Error loading map layers:", error);
+  }
+});
+
+// Close interactive bottom card on mobile when user repositions map
+map.on("dragstart", () => {
+  const sidebar = document.getElementById("sidebar");
+  if (sidebar && window.innerWidth < 768) {
+    sidebar.classList.add("collapsed");
+    const sidebarToggle = document.getElementById("sidebar-toggle");
+    if (sidebarToggle) sidebarToggle.innerHTML = "☰";
+  }
+});
 
 // =====================================================
 // LOAD EVERYTHING
