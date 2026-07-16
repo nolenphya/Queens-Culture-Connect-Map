@@ -20,11 +20,6 @@ map.addControl(
 );
 
 // Create an Apple-style Scale Control
-const scale = new mapboxgl.ScaleControl({
-  maxWidth: 100,      // Keep it compact, matching Apple's minimal look
-  unit: 'imperial'    // Displays feet ('ft') and miles ('mi')
-});
-
 // Add it to the bottom-right corner of the canvas
 map.addControl(scale, 'bottom-right');
 
@@ -1402,11 +1397,14 @@ map.on("click", () => {
 
 
 // Custom Mapbox Control for the Artist Density Legend
+// =====================================================
+// BOTTOM-RIGHT MAP CONTROLS
+// =====================================================
+// 1. Define the Custom Choropleth Control Class (Keep this!)
 class ChoroplethLegendControl {
   onAdd(map) {
     this._container = document.createElement('div');
     this._container.className = 'mapboxgl-ctrl choropleth-legend';
-    // Match the exact interpolation values from your loadArtistLayer function
     this._container.innerHTML = `
       <div class="legend-title">Artists per Neighborhood</div>
       <div class="legend-scale-bar"></div>
@@ -1424,14 +1422,14 @@ class ChoroplethLegendControl {
   }
 }
 
-// 1. Add Scale Control First
+// 2. Declare the scale variable ONLY ONCE
 const scale = new mapboxgl.ScaleControl({
   maxWidth: 100,
   unit: 'imperial'
 });
 map.addControl(scale, 'bottom-right');
 
-// 2. Add Choropleth Control Second (stacks on top of the scale bar)
+// 3. Add the Choropleth Control (it will stack nicely on top of the scale bar)
 const choroplethLegend = new ChoroplethLegendControl();
 map.addControl(choroplethLegend, 'bottom-right');
 
