@@ -441,3 +441,70 @@ RESPONSIVE DESIGN (MOBILE BOTTOM SHEET DETECT)
     background: rgba(0, 0, 0, 0.15);
     border-radius: 4px;
 }
+
+/* ==========================================================
+   APPLE MAPS UI - CHOROPLETH LEGEND CARD
+   ========================================================== */
+.choropleth-legend {
+    background: rgba(255, 255, 255, 0.75) !important; /* Apple Translucent White */
+    backdrop-filter: blur(10px) saturate(190%);
+    -webkit-backdrop-filter: blur(10px) saturate(190%);
+    border-radius: 8px !important;
+    padding: 10px 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08);
+    width: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;
+    margin: 0 !important; /* Use mapbox-ctrl-bottom-right flex gap instead */
+    transition: opacity 0.2s ease, display 0.2s ease;
+}
+
+.choropleth-legend .legend-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: #1c1c1e; /* iOS System Label Color */
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+/* Matches your step values: #f7fbff -> #08306b */
+.choropleth-legend .legend-scale-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, 
+        #f7fbff, 
+        #deebf7, 
+        #c6dbef, 
+        #9ecae1, 
+        #6baed6, 
+        #4292c6, 
+        #2171b5, 
+        #08519c, 
+        #08306b
+    );
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+}
+
+.choropleth-legend .legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    font-weight: 500;
+    color: #86868b; /* iOS Secondary Label Color */
+}
+
+/* Dark mode compatibility */
+@media (prefers-color-scheme: dark) {
+    .choropleth-legend {
+        background-color: rgba(30, 30, 30, 0.7) !important;
+    }
+    .choropleth-legend .legend-title {
+        color: #f5f5f7;
+    }
+    .choropleth-legend .legend-labels {
+        color: #aeaeb2;
+    }
+}

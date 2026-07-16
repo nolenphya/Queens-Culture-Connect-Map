@@ -1095,13 +1095,21 @@ artistsSection.checkbox.addEventListener('change', e => {
       cb.checked = artistsVisible;
     });
 
-    // 2. Simply switch layer visibility; don't wipe out the Mapbox filters
+    // 2. Switch layer visibility
     const visibility = artistsVisible ? 'visible' : 'none';
     if (map.getLayer('artist-fill-layer')) {
       map.setLayoutProperty('artist-fill-layer', 'visibility', visibility);
     }
     if (map.getLayer('artist-outline-layer')) {
       map.setLayoutProperty('artist-outline-layer', 'visibility', visibility);
+    }
+
+    /* ==========================================================
+       TOGGLE CHOROPLETH LEGEND DYNAMICALLY
+       ========================================================== */
+    const legendEl = document.querySelector('.choropleth-legend');
+    if (legendEl) {
+      legendEl.style.display = artistsVisible ? 'flex' : 'none';
     }
   });
 
@@ -1391,6 +1399,41 @@ map.on("click", () => {
     }
 });
 
+
+
+// Custom Mapbox Control for the Artist Density Legend
+class ChoroplethLegendControl {
+  onAdd(map) {
+    this._container = document.createElement('div');
+    this._container.className = 'mapboxgl-ctrl choropleth-legend';
+    // Match the exact interpolation values from your loadArtistLayer function
+    this._container.innerHTML = `
+      <div class="legend-title">Artists per Neighborhood</div>
+      <div class="legend-scale-bar"></div>
+      <div class="legend-labels">
+        <span>0</span>
+        <span>10</span>
+        <span>20</span>
+        <span>30+</span>
+      </div>
+    `;
+    return this._container;
+  }
+  onRemove() {
+    this._container.parentNode.removeChild(this._container);
+  }
+}
+
+// 1. Add Scale Control First
+const scale = new mapboxgl.ScaleControl({
+  maxWidth: 100,
+  unit: 'imperial'
+});
+map.addControl(scale, 'bottom-right');
+
+// 2. Add Choropleth Control Second (stacks on top of the scale bar)
+const choroplethLegend = new ChoroplethLegendControl();
+map.addControl(choroplethLegend, 'bottom-right');
 
 // =====================================================
 // LOAD EVERYTHING
