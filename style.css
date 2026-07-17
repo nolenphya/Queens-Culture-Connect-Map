@@ -462,7 +462,7 @@ RESPONSIVE DESIGN (MOBILE BOTTOM SHEET DETECT)
 }
 
 .choropleth-legend .legend-title {
-    font-size: 10px;
+    font-size: 7px;
     font-weight: 600;
     color: #1c1c1e; /* iOS System Label Color */
     text-transform: uppercase;
