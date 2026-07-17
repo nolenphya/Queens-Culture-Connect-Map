@@ -386,12 +386,34 @@ MODAL OVERLAYS & POPUPS
 }
 
 /* ==========================================================
-FIX FOR SLIDING MARKERS DURING DRAG
+FIX FOR SLIDING MARKERS DURING DRAG + MARKER TEXT STYLING
 ========================================================== */
 
 /* Target the custom marker container and force no animations during map movement */
 .mapboxgl-marker {
     transition: none !important;
+}
+
+.marker-label {
+    position: absolute;
+    top: 42px; /* Places the label text 6px below your 36px marker circle */
+    left: 50%;
+    transform: translateX(-50%); /* Crucial trick to center absolute elements */
+    white-space: nowrap; /* Prevents long names from wrapping awkwardly */
+    text-align: center;
+    pointer-events: none;
+    
+    /* Apple-inspired subtle background panel for maximum legibility */
+    background: rgba(255, 255, 255, 0.92);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #1d1d1f;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.04);
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
 }
 
 /* Ensure your custom org icon markers don't inherit layout transitions */
@@ -462,7 +484,7 @@ RESPONSIVE DESIGN (MOBILE BOTTOM SHEET DETECT)
 }
 
 .choropleth-legend .legend-title {
-    font-size: 7px;
+    font-size: 7ripx;
     font-weight: 600;
     color: #1c1c1e; /* iOS System Label Color */
     text-transform: uppercase;
