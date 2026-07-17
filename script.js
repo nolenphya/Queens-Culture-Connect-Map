@@ -1192,31 +1192,33 @@ labelLink.addEventListener('click', () => {
 }
 
 // =====================================================
-// FILTER ARTISTS (Fixed Neighborhood Toggling)
+// FILTER ARTISTS
 // =====================================================
 
 function updateNeighborhoodFilters() {
-  const selected = Array.from(visibleNeighborhoods);
 
-  // If nothing is selected, hide everything completely
-  if (selected.length === 0) {
-    const hideFilter = ['==', ['get', 'ntaname'], ''];
-    map.setFilter('artist-fill-layer', hideFilter);
-    map.setFilter('artist-outline-layer', hideFilter);
-    return;
-  }
+  const selected =
+    Array.from(
+      visibleNeighborhoods
+    );
 
-  // Use a 'match' expression which acts like a highly reliable whitelist switch
-  const filterExpression = [
-    'match',
-    ['trim', ['get', 'ntaname']], // Forces Mapbox to trim the GeoJSON property during evaluation
-    selected,                     // The whitelist array of currently checked neighborhoods
-    true,                         // If the trimmed name is in the array, show it (true)
-    false                         // Otherwise, hide it (false)
-  ];
+  map.setFilter(
+    'artist-fill-layer',
+    [
+      'in',
+      ['get', 'ntaname'],
+      ['literal', selected]
+    ]
+  );
 
-  map.setFilter('artist-fill-layer', filterExpression);
-  map.setFilter('artist-outline-layer', filterExpression);
+  map.setFilter(
+    'artist-outline-layer',
+    [
+      'in',
+      ['get', 'ntaname'],
+      ['literal', selected]
+    ]
+  );
 }
 
 // =====================================================
