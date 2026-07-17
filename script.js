@@ -1225,6 +1225,10 @@ function updateNeighborhoodFilters() {
 // SEARCH
 // =====================================================
 
+// =====================================================
+// SEARCH (Supports Name & Neighborhood)
+// =====================================================
+
 document
   .getElementById('search-input')
   .addEventListener('input', e => {
@@ -1245,14 +1249,21 @@ document
 
     const matches =
       allMarkers.filter(marker => {
+        // 1. Get the organization name
+        const name = (marker.rowData["Org Name"] || '').toLowerCase();
 
-        const name =
-          (
-            marker.rowData["Org Name"]
-            || ''
-          ).toLowerCase();
+        // 2. Extract zip code from the address to determine its neighborhood
+        const address = marker.rowData["Address"] || '';
+        const zipMatch = address.match(/\b(11\d{3})\b/); // Regex to find Queens zip codes (11xxx)
+        
+        let neighborhood = '';
+        if (zipMatch && zipMatch[1]) {
+          const zip = zipMatch[1];
+          neighborhood = (zipToNeighborhood[zip] || '').toLowerCase();
+        }
 
-        return name.includes(query);
+        // 3. Return true if the query matches either the name OR the neighborhood
+        return name.includes(query) || neighborhood.includes(query);
       });
 
     matches.forEach(marker => {
@@ -1270,19 +1281,13 @@ document
         'click',
         () => {
 
-         map.flyTo({
-
-    center: marker.getLngLat(),
-
-    zoom:15,
-
-    speed:.8,
-
-    curve:1.45,
-
-    essential:true
-
-});
+          map.flyTo({
+            center: marker.getLngLat(),
+            zoom: 15,
+            speed: .8,
+            curve: 1.45,
+            essential: true
+          });
 
           marker.togglePopup();
         }
