@@ -1438,31 +1438,40 @@ class ChoroplethLegendControl {
 }
 
 // 2. Wait for the map to load before initializing data layers and adding controls
+// =====================================================
+// INITIALIZATION AND BOTTOM-RIGHT MAP CONTROLS
+// =====================================================
+
 map.on('load', async () => {
-  // Add the Apple-style Scale Control
+  // 1. Scale Control & Choropleth Legend
   const scale = new mapboxgl.ScaleControl({
     maxWidth: 100,
     unit: 'imperial'
   });
   map.addControl(scale, 'bottom-right');
 
-  // Add the Choropleth Legend (stacks cleanly on top of the scale bar)
   const choroplethLegend = new ChoroplethLegendControl();
   map.addControl(choroplethLegend, 'bottom-right');
 
   try {
-    // Load subway lines and stop markers
-    loadSubwayLayers();
+    // 2. Fetch and render data
+    const records = await fetchData();
+    const orgData = records.map(r => ({
+      id: r.id,
+      ...r.fields
+    }));
 
-    // Fetch and draw organizations from Airtable
-    const orgData = await fetchData();
     createMarkers(orgData);
 
-    // Fetch and draw neighborhood choropleth shapes
+    // 3. Draw neighborhood choropleth FIRST
     await loadArtistLayer();
 
-    // Build the accordion legend in the sidebar panel
+    // 4. Draw subway routes & stops LAST so they sit on top of fill polygons
+    loadSubwayLayers(); 
+
+    // 5. Build sidebar legend
     buildCombinedLegend();
+
   } catch (error) {
     console.error("Error loading map layers:", error);
   }
