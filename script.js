@@ -521,7 +521,11 @@ console.log("Neighborhood counts:", neighborhoodCounts);
   const geojson =
     await response.json();
 
-const uniqueNTAs = new Set();
+ // =====================================================
+  // PROCESS GEOJSON & BUILD UNIQUE NEIGHBORHOOD LIST
+  // =====================================================
+
+  const uniqueNTAs = new Set();
 
   geojson.features.forEach((feature, index) => {
     feature.id = index; // Ensure each feature has a unique numeric ID for hover effects
@@ -659,7 +663,7 @@ map.on('mouseleave', 'artist-fill-layer', () => {
       source: 'artists-nta',
 
       paint: {
-        'line-color': 'rgba(255, 255, 255, 0.02)',
+        'line-color': 'rgba(255, 255, 255, 0.11)',
         'line-width': 1
       }
     });
@@ -1101,16 +1105,16 @@ artistsSection.checkbox.addEventListener('change', e => {
 
   // Populate artist neighborhood filters
  // Populate artist neighborhood filters
+ // Populate artist neighborhood filters (Unique list)
   artistNeighborhoodList
-  .filter(neighborhood => (neighborhoodCounts[neighborhood] || 0) > 0) // Keeps UI list clean
-    .sort()
+    .filter(neighborhood => (neighborhoodCounts[neighborhood] || 0) > 0) // Keeps UI clean (only shows neighborhoods with artists)
     .forEach(neighborhood => {
       const row = document.createElement('div');
       row.className = 'legend-item-row';
 
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
-      checkbox.checked = true;
+      checkbox.checked = visibleNeighborhoods.has(neighborhood);
 
       checkbox.addEventListener('change', () => {
         if (checkbox.checked) {
@@ -1121,64 +1125,34 @@ artistsSection.checkbox.addEventListener('change', e => {
         updateNeighborhoodFilters();
       });
 
-      // Turn the label text into an Apple-style action link
       const labelLink = document.createElement('span');
       labelLink.className = 'legend-link';
       labelLink.style.marginLeft = '4px';
-      labelLink.innerHTML = `${neighborhood} <span class="legend-count">(${neighborhoodCounts[neighborhood]})</span>`;
+      labelLink.innerHTML = `${neighborhood} <span class="legend-count">(${neighborhoodCounts[neighborhood] || 0})</span>`;
 
       // Click to fly/zoom straight to the neighborhood boundary
-      // Click to fly/zoom straight to the neighborhood boundary and open its popup
-      // Click to fly/zoom straight to the neighborhood boundary and open its popup
-labelLink.addEventListener('click', () => {
-  const features = map.queryRenderedFeatures({ layers: ['artist-fill-layer'] });
-  const match = features.find(f => f.properties.ntaname === neighborhood);
-  
-  if (match) {
-    const bounds = new mapboxgl.LngLatBounds();
-    
-    if (match.geometry.type === 'Polygon') {
-      match.geometry.coordinates[0].forEach(coord => bounds.extend(coord));
-    } else if (match.geometry.type === 'MultiPolygon') {
-      match.geometry.coordinates.forEach(poly => {
-        poly[0].forEach(coord => bounds.extend(coord));
+      labelLink.addEventListener('click', () => {
+        const features = map.queryRenderedFeatures({ layers: ['artist-fill-layer'] });
+        const match = features.find(f => f.properties.ntaname?.trim() === neighborhood);
+        
+        if (match) {
+          const bounds = new mapboxgl.LngLatBounds();
+          
+          if (match.geometry.type === 'Polygon') {
+            match.geometry.coordinates[0].forEach(coord => bounds.extend(coord));
+          } else if (match.geometry.type === 'MultiPolygon') {
+            match.geometry.coordinates.forEach(poly => {
+              poly[0].forEach(coord => bounds.extend(coord));
+            });
+          }
+          
+          map.fitBounds(bounds, {
+            padding: 80,
+            maxZoom: 14,
+            duration: 1200
+          });
+        }
       });
-    }
-    
-    map.fitBounds(bounds, {
-      padding: 80,
-      maxZoom: 14,
-      duration: 1200
-    });
-
-    const name = match.properties.ntaname;
-    const count = match.properties.artist_count || 0;
-    
-    // Choose Method A (?search=) or Method B (?filter-by-NTA_Map=) depending on your Softr block settings:
-    const filterLink = `${ARTIST_DIRECTORY_URL}?search=${encodeURIComponent(name)}`;
-
-    new mapboxgl.Popup()
-      .setLngLat(bounds.getCenter())
-      .setHTML(`
-        <div style="max-width:220px; font-family: 'IBM Plex Sans', sans-serif;">
-          <h3 style="margin-bottom: 6px; font-size: 15px; font-weight: 600;">${name}</h3>
-          <p style="margin-bottom: 10px; color: #48484a; font-size: 13px;">
-            ${count} artist${count === 1 ? '' : 's'}
-          </p>
-          <a
-            href="${filterLink}"
-            target="_blank"
-            style="color: #0071e3; font-weight: 600; text-decoration: none; font-size: 13px;"
-            onmouseover="this.style.textDecoration='underline'"
-            onmouseout="this.style.textDecoration='none'"
-          >
-            View Artists in Directory
-          </a>
-        </div>
-      `)
-      .addTo(map);
-  }
-});
 
       row.appendChild(checkbox);
       row.appendChild(labelLink);
@@ -1193,6 +1167,7 @@ labelLink.addEventListener('click', () => {
 function updateNeighborhoodFilters() {
   const selected = Array.from(visibleNeighborhoods);
 
+  // If all checkboxes are unchecked, hide everything
   if (selected.length === 0) {
     const hideFilter = ['==', ['get', 'ntaname'], ''];
     map.setFilter('artist-fill-layer', hideFilter);
@@ -1200,6 +1175,7 @@ function updateNeighborhoodFilters() {
     return;
   }
 
+  // Uses Mapbox 'match' to cleanly evaluate string equality across multi-polygon features
   const filterExpression = [
     'match',
     ['trim', ['get', 'ntaname']],
