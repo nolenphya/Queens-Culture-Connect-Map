@@ -1128,13 +1128,22 @@ artistsSection.checkbox.addEventListener('change', e => {
       labelLink.innerHTML = `${neighborhood} <span class="legend-count">(${neighborhoodCounts[neighborhood] || 0})</span>`;
 
       // Click to fly/zoom straight to the neighborhood boundary
+     // Click to fly/zoom straight to the neighborhood boundary and open its popup
       labelLink.addEventListener('click', () => {
-        const features = map.queryRenderedFeatures({ layers: ['artist-fill-layer'] });
-        const match = features.find(f => f.properties.ntaname?.trim() === neighborhood);
-        
+        // Query the underlying source so it works even if the polygon is off-screen
+        const sourceFeatures = map.querySourceFeatures('artists-nta', {
+          sourceLayer: 'artist-fill-layer'
+        });
+
+        // Find the feature matching the clicked neighborhood
+        const match = sourceFeatures.find(
+          f => f.properties.ntaname?.trim() === neighborhood
+        );
+
         if (match) {
           const bounds = new mapboxgl.LngLatBounds();
-          
+
+          // Calculate bounding box across Polygon or MultiPolygon geometries
           if (match.geometry.type === 'Polygon') {
             match.geometry.coordinates[0].forEach(coord => bounds.extend(coord));
           } else if (match.geometry.type === 'MultiPolygon') {
@@ -1142,12 +1151,39 @@ artistsSection.checkbox.addEventListener('change', e => {
               poly[0].forEach(coord => bounds.extend(coord));
             });
           }
-          
+
+          const center = bounds.getCenter();
+
+          // Smoothly fly to the neighborhood
           map.fitBounds(bounds, {
             padding: 80,
             maxZoom: 14,
             duration: 1200
           });
+
+          // Open popup at the center of the neighborhood
+          const name = match.properties.ntaname;
+          const count = match.properties.artist_count || 0;
+          const filterLink = `${ARTIST_DIRECTORY_URL}?search=${encodeURIComponent(name)}`;
+
+          new mapboxgl.Popup()
+            .setLngLat(center)
+            .setHTML(`
+              <div style="max-width:220px; font-family: sans-serif;">
+                <h3 style="margin-bottom: 6px; font-size: 15px; font-weight: 600;">${name}</h3>
+                <p style="margin-bottom: 10px; color: #48484a; font-size: 13px;">
+                  ${count} artist${count === 1 ? '' : 's'}
+                </p>
+                <a
+                  href="${filterLink}"
+                  target="_blank"
+                  style="color: #0071e3; font-weight: 600; text-decoration: none; font-size: 13px;"
+                >
+                  View Artists
+                </a>
+              </div>
+            `)
+            .addTo(map);
         }
       });
 
