@@ -582,15 +582,15 @@ console.log("Neighborhood counts:", neighborhoodCounts);
           ['linear'],
           ['get', 'artist_count'],
 
-          0, '#f7fbff',
-          1, '#deebf7',
-          3, '#c6dbef',
-          5, '#9ecae1',
-          8, '#6baed6',
-          12, '#4292c6',
-          16, '#2171b5',
-          20, '#08519c',
-          30, '#08306b'
+          0,  '#ffffff', // 0 artists (White)
+  1,  '#f0f0f0',
+  3,  '#d9d9d9',
+  5,  '#bdbdbd',
+  8,  '#969696',
+  12, '#737373',
+  16, '#525252',
+  20, '#252525',
+  30, '#000000'  // 30+ artists (Black)
         ],
 
         'fill-opacity': [
@@ -665,7 +665,7 @@ map.on('mouseleave', 'artist-fill-layer', () => {
       source: 'artists-nta',
 
       paint: {
-        'line-color': '#000000',
+        'line-color': 'rgba(255, 255, 255, 0.4)',
         'line-width': 1
       }
     });
