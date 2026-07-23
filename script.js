@@ -534,12 +534,23 @@ console.log("Neighborhood counts:", neighborhoodCounts);
     feature.properties.artist_count =
       count;
 
-    if (count > 0) {
+    geojson.features.forEach(feature => {
 
-      artistNeighborhoodList.push(nta);
+    const nta =
+      feature.properties.ntaname?.trim();
 
-      visibleNeighborhoods.add(nta);
-    }
+    if (!nta) return;
+
+    const count =
+      neighborhoodCounts[nta] || 0;
+
+    feature.properties.artist_count =
+      count;
+
+    // Track ALL neighborhoods regardless of count
+    artistNeighborhoodList.push(nta);
+    visibleNeighborhoods.add(nta);
+  });
 
     geojson.features.forEach((feature, index) => {
   feature.id = index;
@@ -665,7 +676,7 @@ map.on('mouseleave', 'artist-fill-layer', () => {
       source: 'artists-nta',
 
       paint: {
-        'line-color': 'rgba(255, 255, 255, 0.4)',
+        'line-color': 'rgba(255, 255, 255, 0.11)',
         'line-width': 1
       }
     });
@@ -1108,6 +1119,7 @@ artistsSection.checkbox.addEventListener('change', e => {
   // Populate artist neighborhood filters
  // Populate artist neighborhood filters
   artistNeighborhoodList
+  .filter(neighborhood => (neighborhoodCounts[neighborhood] || 0) > 0) // Keeps UI list clean
     .sort()
     .forEach(neighborhood => {
       const row = document.createElement('div');
@@ -1196,29 +1208,25 @@ labelLink.addEventListener('click', () => {
 // =====================================================
 
 function updateNeighborhoodFilters() {
+  const selected = Array.from(visibleNeighborhoods);
 
-  const selected =
-    Array.from(
-      visibleNeighborhoods
-    );
+  if (selected.length === 0) {
+    const hideFilter = ['==', ['get', 'ntaname'], ''];
+    map.setFilter('artist-fill-layer', hideFilter);
+    map.setFilter('artist-outline-layer', hideFilter);
+    return;
+  }
 
-  map.setFilter(
-    'artist-fill-layer',
-    [
-      'in',
-      ['get', 'ntaname'],
-      ['literal', selected]
-    ]
-  );
+  const filterExpression = [
+    'match',
+    ['trim', ['get', 'ntaname']],
+    selected,
+    true,
+    false
+  ];
 
-  map.setFilter(
-    'artist-outline-layer',
-    [
-      'in',
-      ['get', 'ntaname'],
-      ['literal', selected]
-    ]
-  );
+  map.setFilter('artist-fill-layer', filterExpression);
+  map.setFilter('artist-outline-layer', filterExpression);
 }
 
 // =====================================================
