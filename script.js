@@ -521,41 +521,24 @@ console.log("Neighborhood counts:", neighborhoodCounts);
   const geojson =
     await response.json();
 
-  artistNeighborhoodList = [];
+const uniqueNTAs = new Set();
 
-  geojson.features.forEach(feature => {
+  geojson.features.forEach((feature, index) => {
+    feature.id = index; // Ensure each feature has a unique numeric ID for hover effects
 
-    const nta =
-      feature.properties.ntaname?.trim();
-
-    const count =
-      neighborhoodCounts[nta] || 0;
-
-    feature.properties.artist_count =
-      count;
-
-    geojson.features.forEach(feature => {
-
-    const nta =
-      feature.properties.ntaname?.trim();
-
+    const nta = feature.properties.ntaname?.trim();
     if (!nta) return;
 
-    const count =
-      neighborhoodCounts[nta] || 0;
+    const count = neighborhoodCounts[nta] || 0;
+    feature.properties.artist_count = count;
 
-    feature.properties.artist_count =
-      count;
-
-    // Track ALL neighborhoods regardless of count
-    artistNeighborhoodList.push(nta);
+    // Track unique names and default all to visible
+    uniqueNTAs.add(nta);
     visibleNeighborhoods.add(nta);
   });
 
-    geojson.features.forEach((feature, index) => {
-  feature.id = index;
-});
-  });
+  // Convert Set to a clean, sorted array with NO duplicates
+  artistNeighborhoodList = Array.from(uniqueNTAs).sort();
 
   // =====================================================
   // SOURCE
@@ -676,7 +659,7 @@ map.on('mouseleave', 'artist-fill-layer', () => {
       source: 'artists-nta',
 
       paint: {
-        'line-color': 'rgba(255, 255, 255, 0.11)',
+        'line-color': 'rgba(255, 255, 255, 0.02)',
         'line-width': 1
       }
     });
