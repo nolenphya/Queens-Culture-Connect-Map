@@ -695,9 +695,6 @@ map.setLayoutProperty(
 
   map.on('click', 'artist-fill-layer', e => {
 
- 
-
-
 const clickedMarker =
   e.originalEvent.target.closest('.mapboxgl-marker');
 
@@ -1167,22 +1164,15 @@ artistsSection.checkbox.addEventListener('change', e => {
 function updateNeighborhoodFilters() {
   const selected = Array.from(visibleNeighborhoods);
 
-  // If all checkboxes are unchecked, hide everything
+  // If nothing is selected, hide all neighborhood shapes
   if (selected.length === 0) {
-    const hideFilter = ['==', ['get', 'ntaname'], ''];
-    map.setFilter('artist-fill-layer', hideFilter);
-    map.setFilter('artist-outline-layer', hideFilter);
+    map.setFilter('artist-fill-layer', ['==', ['get', 'ntaname'], '']);
+    map.setFilter('artist-outline-layer', ['==', ['get', 'ntaname'], '']);
     return;
   }
 
-  // Uses Mapbox 'match' to cleanly evaluate string equality across multi-polygon features
-  const filterExpression = [
-    'match',
-    ['trim', ['get', 'ntaname']],
-    selected,
-    true,
-    false
-  ];
+  // Create an 'in' filter checking if 'ntaname' is in the selected list
+  const filterExpression = ['in', ['get', 'ntaname'], ['literal', selected]];
 
   map.setFilter('artist-fill-layer', filterExpression);
   map.setFilter('artist-outline-layer', filterExpression);
@@ -1369,12 +1359,10 @@ map.on("click", () => {
 // =====================================================
 // BOTTOM-RIGHT MAP CONTROLS
 // =====================================================
-// 1. Define the Custom Choropleth Control Class (Keep this!)
 // =====================================================
 // INITIALIZATION AND BOTTOM-RIGHT MAP CONTROLS
 // =====================================================
 
-// 1. Define the Custom Choropleth Control Class
 class ChoroplethLegendControl {
   onAdd(map) {
     this._container = document.createElement('div');
@@ -1396,11 +1384,6 @@ class ChoroplethLegendControl {
   }
 }
 
-// 2. Wait for the map to load before initializing data layers and adding controls
-// =====================================================
-// INITIALIZATION AND BOTTOM-RIGHT MAP CONTROLS
-// =====================================================
-
 map.on('load', async () => {
   // 1. Scale Control & Choropleth Legend
   const scale = new mapboxgl.ScaleControl({
@@ -1413,22 +1396,21 @@ map.on('load', async () => {
   map.addControl(choroplethLegend, 'bottom-right');
 
   try {
-    // 2. Fetch and render data
+    // 2. Fetch orgs and create markers
     const records = await fetchData();
     const orgData = records.map(r => ({
       id: r.id,
       ...r.fields
     }));
-
     createMarkers(orgData);
 
-    // 3. Draw neighborhood choropleth FIRST
+    // 3. Draw neighborhood choropleth & attach popup listeners
     await loadArtistLayer();
 
-    // 4. Draw subway routes & stops LAST so they sit on top of fill polygons
+    // 4. Draw subways on top
     loadSubwayLayers(); 
 
-    // 5. Build sidebar legend
+    // 5. Build combined sidebar legend
     buildCombinedLegend();
 
   } catch (error) {
@@ -1444,31 +1426,4 @@ map.on("dragstart", () => {
     const sidebarToggle = document.getElementById("sidebar-toggle");
     if (sidebarToggle) sidebarToggle.innerHTML = "☰";
   }
-});
-
-// =====================================================
-// LOAD EVERYTHING
-// =====================================================
-
-map.on('load', async () => {
-  // 1. Fetch data and build the background polygon visualizer layers first
-  const records = await fetchData();
-  const orgData = records.map(r => ({
-    id: r.id,
-    ...r.fields
-  }));
-
-  createMarkers(orgData);
-  await loadArtistLayer();
-  buildCombinedLegend();
-
-  // 2. Load subway layers LAST so they are drawn on top of the neighborhood polygons
-  loadSubwayLayers(); 
-});
-
-document.addEventListener('click', e => {
-  console.log(
-    'CLICKED:',
-    e.target.className
-  );
 });
