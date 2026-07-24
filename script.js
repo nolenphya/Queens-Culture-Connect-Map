@@ -663,8 +663,8 @@ map.on('mouseleave', 'artist-fill-layer', () => {
       source: 'artists-nta',
 
       paint: {
-        'line-color': 'rgba(255, 255, 255, 0.11)',
-        'line-width': 3
+        'line-color': 'rgba(255, 255, 255, 0.8)',
+        'line-width': 1
       }
     });
   }
