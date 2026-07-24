@@ -663,12 +663,17 @@ map.on('mouseleave', 'artist-fill-layer', () => {
       source: 'artists-nta',
 
       paint: {
-        'line-color': 'rgba(255, 255, 255, 0.8)',
-        'line-width': 1
+        // Darker color (dark gray/black or crisp solid white)
+        'line-color': '#222222', 
+        
+        // Slightly thicker border width (1.5px or 2px works well)
+        'line-width': 1.5, 
+
+        // Higher opacity to make them clearly defined
+        'line-opacity': 0.8
       }
     });
   }
-
   // =====================================================
   // OPEN INITIALLY
   // =====================================================
