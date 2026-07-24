@@ -419,8 +419,8 @@ const popup = new mapboxgl.Popup({ offset: 25 })
       <h3>${row["Org Name"] || 'Untitled'}</h3>
 
       ${
-        row.Description
-          ? `<p>${row.Description}</p>`
+        row.Tagline
+          ? `<p>${row.Tagline}</p>`
           : ''
       }
 
@@ -664,7 +664,7 @@ map.on('mouseleave', 'artist-fill-layer', () => {
 
       paint: {
         'line-color': 'rgba(255, 255, 255, 0.11)',
-        'line-width': 1
+        'line-width': 3
       }
     });
   }
