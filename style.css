@@ -212,6 +212,7 @@ DYNAMIC LAYERS / LEGEND
     cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: space-between; /* Pushes text/color left and arrow right */
     color: #333336;
 }
 

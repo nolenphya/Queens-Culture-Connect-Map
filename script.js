@@ -12,9 +12,22 @@ const map = new mapboxgl.Map({
   zoom: 11
 });
 
+//Add Navigation control
 map.addControl(
   new mapboxgl.NavigationControl({
     showCompass: true
+  }),
+  'top-right'
+);
+
+// Add Geolocate/Self-Locate Control
+map.addControl(
+  new mapboxgl.GeolocateControl({
+    positionOptions: {
+      enableHighAccuracy: true
+    },
+    trackUserLocation: true,
+    showUserHeading: true
   }),
   'top-right'
 );
@@ -595,7 +608,7 @@ console.log("Neighborhood counts:", neighborhoodCounts);
   'case',
   ['boolean', ['feature-state', 'hover'], false],
   0.95,
-  0.75
+  0.45
 ]
       }
     });
@@ -656,21 +669,25 @@ map.on('mouseleave', 'artist-fill-layer', () => {
   // =====================================================
 
   if (!map.getLayer('artist-outline-layer')) {
-
     map.addLayer({
       id: 'artist-outline-layer',
       type: 'line',
       source: 'artists-nta',
-
       paint: {
-        // Darker color (dark gray/black or crisp solid white)
-        'line-color': '#222222', 
-        
-        // Slightly thicker border width (1.5px or 2px works well)
-        'line-width': 1.5, 
-
-        // Higher opacity to make them clearly defined
-        'line-opacity': 0.8
+        // Outline brightens and thickens drastically on hover
+        'line-color': [
+          'case',
+          ['boolean', ['feature-state', 'hover'], false],
+          '#dfe300', // Vibrant iOS Yellow border on hover
+          '#222222'  // Dark default border
+        ],
+        'line-width': [
+          'case',
+          ['boolean', ['feature-state', 'hover'], false],
+          4,   // Bold 4px border when hovered
+          1.5  // 1.5px default
+        ],
+        'line-opacity': 1.0
       }
     });
   }
@@ -988,34 +1005,37 @@ const organizationsSection =
  
 
   // Populate organization items
+ // Populate organization items
   Object.entries(organizationTagGroups)
     .sort(([a], [b]) => a.localeCompare(b))
     .forEach(([tag, markers]) => {
       const category = document.createElement('div');
       const header = document.createElement('div');
 
+      const leftContainer = document.createElement('div');
+      leftContainer.style.display = 'flex';
+      leftContainer.style.alignItems = 'center';
+
       const colorDot = document.createElement('span');
-
-      colorDot.style.background =
-      tagColors[tag] || '#666';
-
+      colorDot.style.background = tagColors[tag] || '#666';
       colorDot.style.width = '12px';
       colorDot.style.height = '12px';
       colorDot.style.borderRadius = '50%';
       colorDot.style.display = 'inline-block';
       colorDot.style.marginRight = '6px';
 
-      header.innerHTML =
-      `<span class="arrow">▸</span>`;
-
-      header.appendChild(colorDot);
-
-      const textNode =
-        document.createElement('span');
-
+      const textNode = document.createElement('span');
       textNode.textContent = tag;
 
-      header.appendChild(textNode);
+      leftContainer.appendChild(colorDot);
+      leftContainer.appendChild(textNode);
+
+      const arrowSpan = document.createElement('span');
+      arrowSpan.className = 'arrow';
+      arrowSpan.textContent = '▸';
+
+      header.appendChild(leftContainer);
+      header.appendChild(arrowSpan);
 
       header.className = 'legend-category-header';
 
