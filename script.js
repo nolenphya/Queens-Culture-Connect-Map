@@ -732,7 +732,7 @@ if (clickedMarker) return;
       feature.properties.artist_count || 0;
 
     const filterLink =
-      `${ARTIST_DIRECTORY_URL}?filter-by-NTA_Map=${encodeURIComponent(name)}`;
+      `${ARTIST_DIRECTORY_URL}?filter-by-NTA=${encodeURIComponent(name)}`;
 
     new mapboxgl.Popup()
       .setLngLat(e.lngLat)
