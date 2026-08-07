@@ -1189,7 +1189,7 @@ artistsSection.checkbox.addEventListener('change', e => {
           // Open popup at the center of the neighborhood
           const name = match.properties.ntaname;
           const count = match.properties.artist_count || 0;
-          const filterLink = `${ARTIST_DIRECTORY_URL}?search=${encodeURIComponent(name)}`;
+          const filterLink = `${ARTIST_DIRECTORY_URL}?filter-by-Neighborhood_Lookup=${encodeURIComponent(name)}`;
 
           new mapboxgl.Popup()
             .setLngLat(center)
