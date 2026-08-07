@@ -223,37 +223,70 @@ const iconMap = {
 // FETCH ORGANIZATION DATA
 // =====================================================
 
+// =====================================================
+// FETCH ORGANIZATION DATA & AUTO-GEOCODE MISSING LAT/LNG
+// =====================================================
+
 async function fetchData() {
-
-  const filterFormula =
-    encodeURIComponent("{Approved}=TRUE()");
-
-  const viewName =
-    encodeURIComponent("main");
-
+  const filterFormula = encodeURIComponent("{Approved}=TRUE()");
+  const viewName = encodeURIComponent("main");
   let allRecords = [];
   let offset = null;
 
   do {
-
-    const fetchUrl =
-      `${AIRTABLE_URL}?view=${viewName}&filterByFormula=${filterFormula}${offset ? `&offset=${offset}` : ''}`;
-
+    const fetchUrl = `${AIRTABLE_URL}?view=${viewName}&filterByFormula=${filterFormula}${offset ? `&offset=${offset}` : ''}`;
     const res = await fetch(fetchUrl, {
-      headers: {
-        Authorization:
-          `Bearer ${AIRTABLE_API_KEY}`
-      }
+      headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` }
     });
 
     const data = await res.json();
-
-    allRecords =
-      allRecords.concat(data.records || []);
-
+    allRecords = allRecords.concat(data.records || []);
     offset = data.offset || null;
-
   } while (offset);
+
+  // Check for approved records missing Lat/Long and auto-assign them
+  for (const record of allRecords) {
+    const fields = record.fields;
+    const hasLat = fields.Latitude && !isNaN(parseFloat(fields.Latitude));
+    const hasLng = fields.Longitude && !isNaN(parseFloat(fields.Longitude));
+
+    if ((!hasLat || !hasLng) && fields.Address) {
+      console.log(`Geocoding missing coordinates for: ${fields["Org Name"] || record.id}`);
+      
+      const query = encodeURIComponent(`${fields.Address}, Queens, NY`);
+      const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${mapboxgl.accessToken}&limit=1`;
+
+      try {
+        const geoRes = await fetch(geocodeUrl);
+        const geoData = await geoRes.json();
+
+        if (geoData.features && geoData.features.length > 0) {
+          const [lng, lat] = geoData.features[0].center;
+
+          // Assign locally so the map draws it immediately
+          fields.Latitude = String(lat);
+          fields.Longitude = String(lng);
+
+          // Write back to Airtable asynchronously
+          fetch(`${AIRTABLE_URL}/${record.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              fields: {
+                Latitude: String(lat),
+                Longitude: String(lng)
+              }
+            })
+          });
+        }
+      } catch (err) {
+        console.error(`Failed to geocode record ${record.id}:`, err);
+      }
+    }
+  }
 
   return allRecords;
 }
