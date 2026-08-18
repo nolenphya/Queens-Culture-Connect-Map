@@ -227,103 +227,81 @@ const iconMap = {
 // FETCH ORGANIZATION DATA & AUTO-GEOCODE MISSING LAT/LNG
 // =====================================================
 
+// =====================================================
+// FETCH ORGANIZATION DATA (Via Vercel Proxy)
+// =====================================================
+
 async function fetchData() {
-  const filterFormula = encodeURIComponent("{Approved}=TRUE()");
-  const viewName = encodeURIComponent("main");
-  let allRecords = [];
-  let offset = null;
+  try {
+    // Calls your Vercel serverless function endpoint instead of Airtable directly
+    const res = await fetch('/api/fetch-orgs');
 
-  do {
-    const fetchUrl = `${AIRTABLE_URL}?view=${viewName}&filterByFormula=${filterFormula}${offset ? `&offset=${offset}` : ''}`;
-    const res = await fetch(fetchUrl, {
-      headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` }
-    });
+    if (!res.ok) {
+      throw new Error(`Proxy response error: ${res.statusText}`);
+    }
 
-    const data = await res.json();
-    allRecords = allRecords.concat(data.records || []);
-    offset = data.offset || null;
-  } while (offset);
+    const allRecords = await res.json();
 
-  // Check for approved records missing Lat/Long and auto-assign them
-  for (const record of allRecords) {
-    const fields = record.fields;
-    const hasLat = fields.Latitude && !isNaN(parseFloat(fields.Latitude));
-    const hasLng = fields.Longitude && !isNaN(parseFloat(fields.Longitude));
+    // (Optional) Frontend auto-geocoding check for any missing Lat/Long
+    for (const record of allRecords) {
+      const fields = record.fields;
+      const hasLat = fields.Latitude && !isNaN(parseFloat(fields.Latitude));
+      const hasLng = fields.Longitude && !isNaN(parseFloat(fields.Longitude));
 
-    if ((!hasLat || !hasLng) && fields.Address) {
-      console.log(`Geocoding missing coordinates for: ${fields["Org Name"] || record.id}`);
-      
-      const query = encodeURIComponent(`${fields.Address}, Queens, NY`);
-      const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${mapboxgl.accessToken}&limit=1`;
+      if ((!hasLat || !hasLng) && fields.Address) {
+        console.log(`Geocoding missing coordinates for: ${fields["Org Name"] || record.id}`);
+        
+        const query = encodeURIComponent(`${fields.Address}, Queens, NY`);
+        const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${mapboxgl.accessToken}&limit=1`;
 
-      try {
-        const geoRes = await fetch(geocodeUrl);
-        const geoData = await geoRes.json();
+        try {
+          const geoRes = await fetch(geocodeUrl);
+          const geoData = await geoRes.json();
 
-        if (geoData.features && geoData.features.length > 0) {
-          const [lng, lat] = geoData.features[0].center;
-
-          // Assign locally so the map draws it immediately
-          fields.Latitude = String(lat);
-          fields.Longitude = String(lng);
-
-          // Write back to Airtable asynchronously
-          fetch(`${AIRTABLE_URL}/${record.id}`, {
-            method: 'PATCH',
-            headers: {
-              'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              fields: {
-                Latitude: String(lat),
-                Longitude: String(lng)
-              }
-            })
-          });
+          if (geoData.features && geoData.features.length > 0) {
+            const [lng, lat] = geoData.features[0].center;
+            fields.Latitude = String(lat);
+            fields.Longitude = String(lng);
+          }
+        } catch (err) {
+          console.error(`Failed to geocode record ${record.id}:`, err);
         }
-      } catch (err) {
-        console.error(`Failed to geocode record ${record.id}:`, err);
       }
     }
-  }
 
-  return allRecords;
+    return allRecords;
+  } catch (error) {
+    console.error('Failed to fetch data through Vercel endpoint:', error);
+    return [];
+  }
 }
 
 // =====================================================
-// FETCH ARTIST DATA
+// FETCH ARTIST DATA (Via Vercel Proxy)
 // =====================================================
 
 async function fetchArtistData() {
+  try {
+    const res = await fetch('/api/fetch-artists');
+    if (!res.ok) throw new Error(`Proxy error: ${res.statusText}`);
 
-  let records = [];
-  let offset = null;
+    const rawRecords = await res.json();
 
-  do {
-
-    const url =
-      `${ARTIST_URL}${offset ? `?offset=${offset}` : ''}`;
-
-    const res = await fetch(url, {
-      headers: {
-        Authorization:
-          `Bearer ${AIRTABLE_API_KEY}`
-      }
-    });
-
-    const data = await res.json();
-
-    records =
-      records.concat(data.records || []);
-
-    offset = data.offset || null;
-
-  } while (offset);
-
-  return records.map(r => r.fields);
+    // Preserve your existing data parsing & normalization:
+    return rawRecords
+      .map((r) => r.fields)
+      .filter((f) => f && f["Artist Name"])
+      .map((f) => ({
+        ...f,
+        Latitude: parseFloat(f.Latitude),
+        Longitude: parseFloat(f.Longitude),
+        NTA: f["NTA Code"] || f.NTA || "", // Standardizes NTA field for choropleth matching
+      }));
+  } catch (error) {
+    console.error("Error loading artist data through proxy:", error);
+    return [];
+  }
 }
-
 // =====================================================
 // CREATE ORGANIZATION MARKERS
 // =====================================================
