@@ -47,7 +47,7 @@ map.touchZoomRotate.enable();
 // AIRTABLE SETUP
 // =====================================================
 
-const AIRTABLE_API_KEY = 'patboskAQTJUi9FlQ.1c30c3c632cd4d7bd03cf949e50edd922425aba8dcbf0c8a6002e98db67c74a3';
+//const AIRTABLE_API_KEY = 'patboskAQTJUi9FlQ.1c30c3c632cd4d7bd03cf949e50edd922425aba8dcbf0c8a6002e98db67c74a3';
 
 const BASE_ID =
   'apppBx0a9hj0Z1ciw';
@@ -55,8 +55,8 @@ const BASE_ID =
 const TABLE_NAME =
   'tblgqyoE5TZUzQDKw';
 
-const AIRTABLE_URL =
-  `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
+//const AIRTABLE_URL =
+ // `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
 
 // =====================================================
 // ARTIST AIRTABLE
@@ -66,8 +66,8 @@ const AIRTABLE_URL =
 const ARTIST_BASE_ID = 'apppBx0a9hj0Z1ciw';
 const ARTIST_TABLE_NAME = 'tbl9OiPT8QI8ss20e';
 
-const ARTIST_URL =
-  `https://api.airtable.com/v0/${ARTIST_BASE_ID}/${ARTIST_TABLE_NAME}`;
+//const ARTIST_URL =
+  //`https://api.airtable.com/v0/${ARTIST_BASE_ID}/${ARTIST_TABLE_NAME}`;
 
 // =====================================================
 // GLOBALS

@@ -1,5 +1,9 @@
 // api/fetch-orgs.js
 
+if (req.method !== 'GET') {
+  return res.status(405).json({ error: 'Method not allowed' });
+}
+
 export default async function handler(req, res) {
   // Read the secret key from Vercel's environment variables
   const apiKey = process.env.AIRTABLE_API_KEY;
