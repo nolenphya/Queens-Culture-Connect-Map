@@ -1,13 +1,7 @@
-// api/fetch-artists.js
-
-if (req.method !== 'GET') {
-  return res.status(405).json({ error: 'Method not allowed' });
-}
-
 module.exports = async function handler(req, res) {
-  const apiKey = process.env.AIRTABLE_API_KEY; // Read safely from Vercel env
+  const apiKey = process.env.AIRTABLE_API_KEY;
   const baseId = 'apppBx0a9hj0Z1ciw';
-  const tableName = 'tbl9OiPT8QI8ss20e'; // Artists table ID
+  const tableName = 'tbl9OiPT8QI8ss20e';
 
   let records = [];
   let offset = null;
@@ -31,9 +25,10 @@ module.exports = async function handler(req, res) {
       offset = data.offset || null;
     } while (offset);
 
+    // Return full record objects so script.js can parse fields
     res.status(200).json(records);
   } catch (error) {
     console.error('Error fetching artist data:', error);
     res.status(500).json({ error: 'Failed to fetch artist data' });
   }
-}
+};
