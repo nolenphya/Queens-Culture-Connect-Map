@@ -4,7 +4,7 @@ if (req.method !== 'GET') {
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   const apiKey = process.env.AIRTABLE_API_KEY; // Read safely from Vercel env
   const baseId = 'apppBx0a9hj0Z1ciw';
   const tableName = 'tbl9OiPT8QI8ss20e'; // Artists table ID
