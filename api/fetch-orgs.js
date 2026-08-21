@@ -1,3 +1,6 @@
+// Helper function to pause execution for a given number of milliseconds
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 module.exports = async function handler(req, res) {
   // Read secret key inside the function handler
   const apiKey = process.env.AIRTABLE_API_KEY;
