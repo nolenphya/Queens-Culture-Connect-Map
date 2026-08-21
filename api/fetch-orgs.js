@@ -20,18 +20,24 @@ module.exports = async function handler(req, res) {
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`Airtable API error: ${response.statusText}`);
+     if (!response.ok) {
+        throw new Error(`Airtable error: ${response.statusText}`);
       }
 
       const data = await response.json();
-      allRecords = allRecords.concat(data.records || []);
+      records = records.concat(data.records || []);
       offset = data.offset || null;
+
+      // If there are more pages, pause for 250ms before the next request
+      if (offset) {
+        await sleep(250);
+      }
     } while (offset);
 
-    res.status(200).json(allRecords);
+    // Return full record objects so script.js can parse fields
+    res.status(200).json(records);
   } catch (error) {
-    console.error('Error fetching data:', error);
-    res.status(500).json({ error: error.message || 'Failed to fetch organization data' });
+    console.error('Error fetching artist data:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch artist data' });
   }
 };
