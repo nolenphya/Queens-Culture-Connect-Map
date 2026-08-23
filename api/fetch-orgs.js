@@ -2,7 +2,6 @@
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 module.exports = async function handler(req, res) {
-  // Read secret key inside the function handler
   const apiKey = process.env.AIRTABLE_API_KEY;
   const baseId = 'apppBx0a9hj0Z1ciw';
   const tableName = 'tblgqyoE5TZUzQDKw';
@@ -20,24 +19,23 @@ module.exports = async function handler(req, res) {
         },
       });
 
-     if (!response.ok) {
+      if (!response.ok) {
         throw new Error(`Airtable error: ${response.statusText}`);
       }
 
       const data = await response.json();
-      records = records.concat(data.records || []);
+      allRecords = allRecords.concat(data.records || []);
       offset = data.offset || null;
 
-      // If there are more pages, pause for 250ms before the next request
+      // Pause for 250ms between pages to stay under Airtable's 5 req/sec limit
       if (offset) {
         await sleep(250);
       }
     } while (offset);
 
-    // Return full record objects so script.js can parse fields
-    res.status(200).json(records);
+    res.status(200).json(allRecords);
   } catch (error) {
-    console.error('Error fetching artist data:', error);
-    res.status(500).json({ error: error.message || 'Failed to fetch artist data' });
+    console.error('Error fetching org data:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch organization data' });
   }
 };
