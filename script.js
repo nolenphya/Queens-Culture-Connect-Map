@@ -67,7 +67,7 @@ const ARTIST_BASE_ID = 'apppBx0a9hj0Z1ciw';
 const ARTIST_TABLE_NAME = 'tbl9OiPT8QI8ss20e';
 
 //const ARTIST_URL =
-  //`https://api.airtable.com/v0/${ARTIST_BASE_ID}/${ARTIST_TABLE_NAME}`;
+  `https://api.airtable.com/v0/${ARTIST_BASE_ID}/${ARTIST_TABLE_NAME}`;
 
 // =====================================================
 // GLOBALS
@@ -1468,7 +1468,7 @@ map.on('load', async () => {
   map.addControl(choroplethLegend, 'bottom-right');
 
   try {
-    // 2. Fetch orgs and create markers
+    // 2. Fetch orgs and create markers FIRST
     const records = await fetchData();
     const orgData = records.map(r => ({
       id: r.id,
@@ -1476,13 +1476,16 @@ map.on('load', async () => {
     }));
     createMarkers(orgData);
 
-    // 3. Draw neighborhood choropleth & attach popup listeners
+    // 3. Pause briefly before hitting Airtable again for artists
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // 4. Draw neighborhood choropleth & attach popup listeners
     await loadArtistLayer();
 
-    // 4. Draw subways on top
+    // 5. Draw subways on top
     loadSubwayLayers(); 
 
-    // 5. Build combined sidebar legend
+    // 6. Build combined sidebar legend
     buildCombinedLegend();
 
   } catch (error) {
