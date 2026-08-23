@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
 
       // If there are more pages, pause for 250ms before the next request
       if (offset) {
-        await sleep(300);
+        await sleep(500);
       }
     } while (offset);
 

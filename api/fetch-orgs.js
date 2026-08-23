@@ -27,9 +27,9 @@ module.exports = async function handler(req, res) {
       allRecords = allRecords.concat(data.records || []);
       offset = data.offset || null;
 
-      // Pause for 250ms between pages to stay under Airtable's 5 req/sec limit
+      // Pause for 500ms between pages to stay under Airtable's 5 req/sec limit
       if (offset) {
-        await sleep(250);
+        await sleep(500);
       }
     } while (offset);
 
