@@ -42,9 +42,12 @@ async function fetchAllRecords(tableId) {
         },
       });
 
-      if (response.status === 429) {
+     if (response.status === 429) {
         retries++;
-        // Start backoff at 5 seconds, 10s, 20s...
+        // Read the body to see what Airtable is specifically complaining about
+        const errorBody = await response.text();
+        console.warn(`[429 Body]: ${errorBody}`);
+
         const retryAfterHeader = response.headers.get('retry-after');
         const waitTime = retryAfterHeader 
           ? parseInt(retryAfterHeader, 10) * 1000 
@@ -52,8 +55,6 @@ async function fetchAllRecords(tableId) {
 
         console.warn(`[429] Rate limited on table ${tableId}. Waiting ${waitTime / 1000}s... (Attempt ${retries}/${maxRetries})`);
         await sleep(waitTime);
-      } else {
-        break;
       }
     }
 
