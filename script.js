@@ -219,59 +219,33 @@ const iconMap = {
 };
 
 
-// =====================================================
-// FETCH ORGANIZATION DATA
-// =====================================================
 
 // =====================================================
-// FETCH ORGANIZATION DATA & AUTO-GEOCODE MISSING LAT/LNG
+// FETCH ORGANIZATION DATA (Static JSON)
 // =====================================================
-
-// =====================================================
-// FETCH ORGANIZATION DATA (Via Vercel Proxy)
-// =====================================================
-
 async function fetchData() {
   try {
-    // Calls your Vercel serverless function endpoint instead of Airtable directly
-    const res = await fetch('/api/fetch-orgs');
-
-    if (!res.ok) {
-      throw new Error(`Proxy response error: ${res.statusText}`);
-    }
-
+    const res = await fetch('./data/orgs.json');
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const allRecords = await res.json();
-
-    // (Optional) Frontend auto-geocoding check for any missing Lat/Long
-    for (const record of allRecords) {
-      const fields = record.fields;
-      const hasLat = fields.Latitude && !isNaN(parseFloat(fields.Latitude));
-      const hasLng = fields.Longitude && !isNaN(parseFloat(fields.Longitude));
-
-      if ((!hasLat || !hasLng) && fields.Address) {
-        console.log(`Geocoding missing coordinates for: ${fields["Org Name"] || record.id}`);
-        
-        const query = encodeURIComponent(`${fields.Address}, Queens, NY`);
-        const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${mapboxgl.accessToken}&limit=1`;
-
-        try {
-          const geoRes = await fetch(geocodeUrl);
-          const geoData = await geoRes.json();
-
-          if (geoData.features && geoData.features.length > 0) {
-            const [lng, lat] = geoData.features[0].center;
-            fields.Latitude = String(lat);
-            fields.Longitude = String(lng);
-          }
-        } catch (err) {
-          console.error(`Failed to geocode record ${record.id}:`, err);
-        }
-      }
-    }
-
     return allRecords;
   } catch (error) {
-    console.error('Failed to fetch data through Vercel endpoint:', error);
+    console.error('Failed to load static orgs data:', error);
+    return [];
+  }
+}
+
+// =====================================================
+// FETCH ARTIST DATA (Static JSON)
+// =====================================================
+async function fetchArtistData() {
+  try {
+    const res = await fetch('./data/artists.json');
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const records = await res.json();
+    return records;
+  } catch (error) {
+    console.error('Failed to load static artist data:', error);
     return [];
   }
 }
