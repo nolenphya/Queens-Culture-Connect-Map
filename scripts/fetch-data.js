@@ -19,9 +19,12 @@ async function fetchAllRecords(tableId) {
   let records = [];
   let offset = null;
 
+  // Initial wait to clear any leftover rate limits from previous runs
+  await sleep(2000);
+
   do {
-    // Basic throttle between pages (500ms = 2 requests per second maximum)
-    await sleep(500);
+    // Throttle: Max 1-2 requests per second
+    await sleep(1000);
 
     let url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
     if (offset) {
@@ -32,7 +35,6 @@ async function fetchAllRecords(tableId) {
     let retries = 0;
     const maxRetries = 5;
 
-    // Retry loop specifically for 429 / Rate Limit errors
     while (retries < maxRetries) {
       response = await fetch(url, {
         headers: {
@@ -42,16 +44,15 @@ async function fetchAllRecords(tableId) {
 
       if (response.status === 429) {
         retries++;
-        // Check if Airtable provided a 'Retry-After' header, default to backing off 2s, 4s, 8s...
+        // Start backoff at 5 seconds, 10s, 20s...
         const retryAfterHeader = response.headers.get('retry-after');
         const waitTime = retryAfterHeader 
           ? parseInt(retryAfterHeader, 10) * 1000 
-          : Math.pow(2, retries) * 1000;
+          : Math.pow(2, retries) * 2500;
 
-        console.warn(`[429] Rate limited on table ${tableId}. Retrying in ${waitTime}ms... (Attempt ${retries}/${maxRetries})`);
+        console.warn(`[429] Rate limited on table ${tableId}. Waiting ${waitTime / 1000}s... (Attempt ${retries}/${maxRetries})`);
         await sleep(waitTime);
       } else {
-        // Not a rate limit error, break out of retry loop to process response
         break;
       }
     }
