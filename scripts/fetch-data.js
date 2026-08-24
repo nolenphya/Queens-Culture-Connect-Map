@@ -1,6 +1,9 @@
-
+console.log("Checking environment variables:");
+console.log("BASE_ID exists:", !!process.env.AIRTABLE_BASE_ID);
+console.log("API_KEY exists:", !!process.env.AIRTABLE_API_KEY);
 const fs = require('fs');
 const path = require('path');
+
 
 const API_KEY = process.env.AIRTABLE_API_KEY;
 const BASE_ID = 'apppBx0a9hj0Z1ciw';
