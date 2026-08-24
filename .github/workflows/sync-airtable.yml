@@ -2,15 +2,15 @@ name: Sync Airtable Data
 
 on:
   schedule:
-    # Runs automatically every 6 hours
-    - cron: '0 */6 * * *'
-  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+    - cron: '0 * * * *' # Runs every hour (or whatever schedule you set)
+  workflow_dispatch: # Allows manual trigger
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -18,13 +18,18 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Install dependencies
+        run: npm ci
+
       - name: Fetch Airtable Data
         env:
           AIRTABLE_API_KEY: ${{ secrets.AIRTABLE_API_KEY }}
-        run: node scripts/fetch-data.js
+        run: node sync-data.js # Or whatever script updates data/orgs.json & data/artists.json
 
-      - name: Commit and Push Updated Data JSONs
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Commit and push changes
+        uses: EndBug/add-and-commit@v9
         with:
-          commit_message: "Automated data sync from Airtable"
-          file_pattern: "data/*.json"
+          author_name: 'github-actions[bot]'
+          author_email: 'github-actions[bot]@users.noreply.github.com'
+          message: 'Auto-update Airtable JSON datasets'
+          add: 'data/'
