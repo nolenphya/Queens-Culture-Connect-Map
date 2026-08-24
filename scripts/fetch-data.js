@@ -4,6 +4,7 @@ const path = require('path');
 
 const API_KEY = process.env.AIRTABLE_API_KEY;
 const BASE_ID = 'apppBx0a9hj0Z1ciw';
+const TABLE_NAME = 'tblgqyoE5TZUzQDKw';
 
 const ORGS_TABLE = 'tblgqyoE5TZUzQDKw';
 const ARTISTS_TABLE = 'tbl9OiPT8QI8ss20e';
