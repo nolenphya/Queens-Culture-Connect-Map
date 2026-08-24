@@ -1,3 +1,4 @@
+
 const fs = require('fs');
 const path = require('path');
 
@@ -7,28 +8,36 @@ const BASE_ID = 'apppBx0a9hj0Z1ciw';
 const ORGS_TABLE = 'tblgqyoE5TZUzQDKw';
 const ARTISTS_TABLE = 'tbl9OiPT8QI8ss20e';
 
+// Helper delay function to stay well under Airtable's 5 req/sec limit
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function fetchAllRecords(tableName) {
+async function fetchAllRecords(tableId) {
   let records = [];
   let offset = null;
 
   do {
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${tableName}${offset ? `?offset=${offset}` : ''}`;
-    
+    // 1. Pause 250ms before every fetch call so Airtable doesn't throw "Too Many Requests"
+    await sleep(250);
+
+    let url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
+    if (offset) {
+      url += `?offset=${offset}`;
+    }
+
     const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${API_KEY}` }
+      headers: {
+        Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}`,
+      },
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch ${tableName}: ${response.statusText}`);
+      throw new Error(`Failed to fetch ${tableId}: ${response.statusText}`);
     }
 
     const data = await response.json();
-    records = records.concat(data.records || []);
-    offset = data.offset || null;
+    records = records.concat(data.records);
+    offset = data.offset;
 
-    if (offset) await sleep(300); // Friendly delay for Airtable
   } while (offset);
 
   return records;
