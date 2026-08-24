@@ -49,11 +49,11 @@ map.touchZoomRotate.enable();
 
 //const AIRTABLE_API_KEY = 'patboskAQTJUi9FlQ.1c30c3c632cd4d7bd03cf949e50edd922425aba8dcbf0c8a6002e98db67c74a3';
 
-const BASE_ID =
-  'apppBx0a9hj0Z1ciw';
+//const BASE_ID =
+  //'apppBx0a9hj0Z1ciw';
 
-const TABLE_NAME =
-  'tblgqyoE5TZUzQDKw';
+//const TABLE_NAME =
+ //'tblgqyoE5TZUzQDKw';
 
 //const AIRTABLE_URL =
  // `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
@@ -63,11 +63,11 @@ const TABLE_NAME =
 // =====================================================
 
 
-const ARTIST_BASE_ID = 'apppBx0a9hj0Z1ciw';
-const ARTIST_TABLE_NAME = 'tbl9OiPT8QI8ss20e';
+//const ARTIST_BASE_ID = 'apppBx0a9hj0Z1ciw';
+//const ARTIST_TABLE_NAME = 'tbl9OiPT8QI8ss20e';
 
 //const ARTIST_URL =
-  `https://api.airtable.com/v0/${ARTIST_BASE_ID}/${ARTIST_TABLE_NAME}`;
+ // `https://api.airtable.com/v0/${ARTIST_BASE_ID}/${ARTIST_TABLE_NAME}`;
 
 // =====================================================
 // GLOBALS
@@ -1417,24 +1417,19 @@ map.on('load', async () => {
   map.addControl(choroplethLegend, 'bottom-right');
 
   try {
-    // 2. Fetch orgs and create markers FIRST
-    const records = await fetchData();
-    const orgData = records.map(r => ({
-      id: r.id,
-      ...r.fields
-    }));
-    createMarkers(orgData);
+    // 2. Load static JSON data in parallel (lightning fast!)
+    const [orgRecords] = await Promise.all([
+      fetchData(),
+      loadArtistLayer()
+    ]);
 
-    // 3. Pause briefly before hitting Airtable again for artists
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // 3. Render Organization Markers
+    createMarkers(orgRecords);
 
-    // 4. Draw neighborhood choropleth & attach popup listeners
-    await loadArtistLayer();
-
-    // 5. Draw subways on top
+    // 4. Draw subways on top
     loadSubwayLayers(); 
 
-    // 6. Build combined sidebar legend
+    // 5. Build combined sidebar legend
     buildCombinedLegend();
 
   } catch (error) {
