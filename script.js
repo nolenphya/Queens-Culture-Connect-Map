@@ -250,32 +250,7 @@ async function fetchArtistData() {
   }
 }
 
-// =====================================================
-// FETCH ARTIST DATA (Via Vercel Proxy)
-// =====================================================
 
-async function fetchArtistData() {
-  try {
-    const res = await fetch('/api/fetch-artists');
-    if (!res.ok) throw new Error(`Proxy error: ${res.statusText}`);
-
-    const rawRecords = await res.json();
-
-    // Preserve your existing data parsing & normalization:
-    return rawRecords
-      .map((r) => r.fields)
-      .filter((f) => f && f["Artist Name"])
-      .map((f) => ({
-        ...f,
-        Latitude: parseFloat(f.Latitude),
-        Longitude: parseFloat(f.Longitude),
-        NTA: f["NTA Code"] || f.NTA || "", // Standardizes NTA field for choropleth matching
-      }));
-  } catch (error) {
-    console.error("Error loading artist data through proxy:", error);
-    return [];
-  }
-}
 // =====================================================
 // CREATE ORGANIZATION MARKERS
 // =====================================================
