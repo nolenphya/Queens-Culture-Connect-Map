@@ -1,9 +1,9 @@
-name: Sync Airtable Data
+name: Sync Data Workflow
 
 on:
   schedule:
-    - cron: '0 * * * *' # Runs every hour (or whatever schedule you set)
-  workflow_dispatch: # Allows manual trigger
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   sync:
@@ -18,18 +18,18 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Install dependencies
-        run: npm install
+      # REMOVED "npm install" STEP HERE TO PREVENT ENOENT ERROR
 
       - name: Fetch Airtable Data
         env:
           AIRTABLE_API_KEY: ${{ secrets.AIRTABLE_API_KEY }}
-        run: node sync-data.js # Or whatever script updates data/orgs.json & data/artists.json
+          AIRTABLE_BASE_ID: ${{ secrets.AIRTABLE_BASE_ID }}
+        run: node scripts/fetch-data.js
 
       - name: Commit and push changes
         uses: EndBug/add-and-commit@v9
         with:
           author_name: 'github-actions[bot]'
           author_email: 'github-actions[bot]@users.noreply.github.com'
-          message: 'Auto-update Airtable JSON datasets'
+          message: 'Auto-update static JSON data'
           add: 'data/'
