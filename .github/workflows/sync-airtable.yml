@@ -1,35 +1,36 @@
-name: Sync Data Workflow
+name: Sync Airtable Data
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    # Runs automatically every 6 hours
+    - cron: '0 */6 * * *'
+  # Allows you to click "Run workflow" manually in GitHub anytime
   workflow_dispatch:
+  # Triggers on code pushes
+  push:
+    branches:
+      - main
 
 jobs:
-  sync:
+  build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: '24'
+          node-version: '18'
 
-      # REMOVED "npm install" STEP HERE TO PREVENT ENOENT ERROR
-
-      - name: Fetch Airtable Data
+      - name: Run data fetch script
         env:
-          AIRTABLE_API_KEY: ${{ secrets.AIRTABLE_API_KEY }}
           AIRTABLE_BASE_ID: ${{ secrets.AIRTABLE_BASE_ID }}
         run: node scripts/fetch-data.js
 
-      - name: Commit and push changes
-        uses: EndBug/add-and-commit@v9
-        with:
-          author_name: 'github-actions[bot]'
-          author_email: 'github-actions[bot]@users.noreply.github.com'
-          message: 'Auto-update static JSON data'
-          add: 'data/'
+      - name: Commit and push updated JSON data
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add data/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update map datasets" && git push)
