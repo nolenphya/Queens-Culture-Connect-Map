@@ -1,36 +1,30 @@
-console.log("Checking environment variables:");
-console.log("BASE_ID exists:", !!process.env.AIRTABLE_BASE_ID);
-console.log("API_KEY exists:", !!process.env.AIRTABLE_API_KEY);
 const fs = require('fs');
 const path = require('path');
 
-
-const API_KEY = process.env.AIRTABLE_API_KEY;
-const BASE_ID = 'appirTxnn4ahpwSuk';
-const TABLE_NAME = 'tblgqyoE5TZUzQDKw';
+// Base ID hardcoded or pulled from environment
+const BASE_ID = process.env.AIRTABLE_BASE_ID || 'appirTxnn4ahpwSuk';
 
 const ORGS_TABLE = 'tblgqyoE5TZUzQDKw';
 const ARTISTS_TABLE = 'tbl9OiPT8QI8ss20e';
 
-// Helper delay function to stay well under Airtable's 5 req/sec limit
+// Helper delay function
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fetchAllRecords(tableId) {
   let records = [];
   let offset = null;
 
-  // Your unique Cloudflare Worker URL
-  const PROXY_URL = "[https://airtable-proxy.nolen-scruggs.workers.dev](https://airtable-proxy.nolen-scruggs.workers.dev";
+  // Clean Worker URL (fixed typo)
+  const PROXY_URL = "https://airtable-proxy.nolen-scruggs.workers.dev";
 
   do {
-    // Target the Worker instead of api.airtable.com
-    let url = `${PROXY_URL}/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
+    // Uses BASE_ID variable
+    let url = `${PROXY_URL}/v0/${BASE_ID}/${tableId}`;
     if (offset) {
       url += `?offset=${offset}`;
     }
 
-    // You no longer need to pass the Authorization header here; 
-    // the Cloudflare Worker attaches it safely on the server side!
+    // No Authorization header needed—Cloudflare attaches it safely!
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -47,11 +41,6 @@ async function fetchAllRecords(tableId) {
 }
 
 async function run() {
-  if (!API_KEY) {
-    console.error("Missing AIRTABLE_API_KEY environment variable.");
-    process.exit(1);
-  }
-
   try {
     console.log("Fetching Organizations...");
     const orgs = await fetchAllRecords(ORGS_TABLE);
@@ -80,7 +69,7 @@ async function run() {
     // Ensure 'data' folder exists
     const dataDir = path.join(__dirname, '..', 'data');
     if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir);
+      fs.mkdirSync(dataDir, { recursive: true });
     }
 
     // Save JSON files
