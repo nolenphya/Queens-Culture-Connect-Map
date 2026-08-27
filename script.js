@@ -43,36 +43,6 @@ map.scrollZoom.setZoomRate(1 / 150);
 map.dragPan.enable();
 map.touchZoomRotate.enable();
 
-// =====================================================
-// AIRTABLE SETUP
-// =====================================================
-
-//const AIRTABLE_API_KEY = 'patboskAQTJUi9FlQ.1c30c3c632cd4d7bd03cf949e50edd922425aba8dcbf0c8a6002e98db67c74a3';
-
-//const BASE_ID =
-  //'apppBx0a9hj0Z1ciw';
-
-//const TABLE_NAME =
- //'tblgqyoE5TZUzQDKw';
-
-//const AIRTABLE_URL =
- // `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
-
-// =====================================================
-// ARTIST AIRTABLE
-// =====================================================
-
-
-//const ARTIST_BASE_ID = 'apppBx0a9hj0Z1ciw';
-//const ARTIST_TABLE_NAME = 'tbl9OiPT8QI8ss20e';
-
-//const ARTIST_URL =
- // `https://api.airtable.com/v0/${ARTIST_BASE_ID}/${ARTIST_TABLE_NAME}`;
-
-// =====================================================
-// GLOBALS
-// =====================================================
-
 let allMarkers = [];
 
 let organizationsVisible = true;
@@ -463,27 +433,27 @@ async function loadArtistLayer() {
   // BUILD COUNTS FROM ZIP
   // =====================================================
 
- artists.forEach(artist => {
+artists.forEach(artist => {
+    // Check NTA first (from fetch-data.js), then fallback to NTA_Map
+    let nta = artist.NTA || artist.NTA_Map;
 
-  let nta = artist.NTA_Map;
+    // Airtable lookup / linked fields sometimes come back as arrays
+    if (Array.isArray(nta)) {
+      nta = nta[0];
+    }
 
-  // Airtable lookup / linked fields sometimes come back as arrays
-  if (Array.isArray(nta)) {
-    nta = nta[0];
-  }
+    nta = nta?.trim();
 
-  nta = nta?.trim();
+    if (!nta) return;
 
-  if (!nta) return;
+    if (!neighborhoodCounts[nta]) {
+      neighborhoodCounts[nta] = 0;
+    }
 
-  if (!neighborhoodCounts[nta]) {
-    neighborhoodCounts[nta] = 0;
-  }
+    neighborhoodCounts[nta]++;
+  });
 
-  neighborhoodCounts[nta]++;
-});
-
-console.log("Neighborhood counts:", neighborhoodCounts);
+  console.log("Neighborhood counts mapped:", neighborhoodCounts);
   // =====================================================
   // LOAD GEOJSON
   // =====================================================
