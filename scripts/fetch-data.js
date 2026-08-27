@@ -20,7 +20,7 @@ async function fetchAllRecords(tableId) {
   let offset = null;
 
   // Your unique Cloudflare Worker URL
-  const PROXY_URL = "airtable-proxy.nolen-scruggs.workers.dev";
+  const PROXY_URL = "[https://airtable-proxy.nolen-scruggs.workers.dev](https://airtable-proxy.nolen-scruggs.workers.dev";
 
   do {
     // Target the Worker instead of api.airtable.com
