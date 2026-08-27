@@ -2,8 +2,11 @@ name: Sync Airtable Data
 
 on:
   schedule:
-    # Runs hourly to keep signed image URLs fresh
+    # Hourly fallback sync just in case
     - cron: '0 * * * *'
+  # Listens for real-time dispatch signals from Airtable
+  repository_dispatch:
+    types: [airtable-update]
   workflow_dispatch:
 
 jobs:
@@ -28,4 +31,4 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add data/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-refresh map datasets and attachment tokens" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Real-time sync: Auto-refresh map datasets" && git push)
