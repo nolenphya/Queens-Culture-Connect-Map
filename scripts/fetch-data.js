@@ -8,7 +8,9 @@ const ARTISTS_TABLE = 'tbl9OiPT8QI8ss20e';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function fetchAllRecords(tableId) {
+// In scripts/fetch-data.js, update fetchAllRecords or add filter parameter:
+
+async function fetchAllRecords(tableId, filterFormula = '') {
   let records = [];
   let offset = null;
 
@@ -16,8 +18,13 @@ async function fetchAllRecords(tableId) {
 
   do {
     let url = `${PROXY_URL}/v0/${BASE_ID}/${tableId}`;
-    if (offset) {
-      url += `?offset=${offset}`;
+    let params = [];
+    
+    if (offset) params.push(`offset=${offset}`);
+    if (filterFormula) params.push(`filterByFormula=${encodeURIComponent(filterFormula)}`);
+    
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
     }
 
     const response = await fetch(url);
@@ -35,6 +42,10 @@ async function fetchAllRecords(tableId) {
   return records;
 }
 
+// Then in your run() function:
+console.log("Fetching Organizations...");
+// Adjust '{Status} = "Approved"' to match your exact column name & option in Airtable
+const orgs = await fetchAllRecords(ORGS_TABLE, '{Status} = "Approved"');
 async function run() {
   try {
     console.log("Fetching Organizations...");
@@ -77,5 +88,6 @@ async function run() {
     process.exit(1);
   }
 }
+
 
 run();
