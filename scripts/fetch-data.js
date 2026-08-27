@@ -19,44 +19,19 @@ async function fetchAllRecords(tableId) {
   let records = [];
   let offset = null;
 
-  // Initial wait to clear any leftover rate limits from previous runs
-  await sleep(2000);
+  // Your unique Cloudflare Worker URL
+  const PROXY_URL = "airtable-proxy.nolen-scruggs.workers.dev";
 
   do {
-    // Throttle: Max 1-2 requests per second
-    await sleep(1000);
-
-    let url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
+    // Target the Worker instead of api.airtable.com
+    let url = `${PROXY_URL}/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
     if (offset) {
       url += `?offset=${offset}`;
     }
 
-    let response;
-    let retries = 0;
-    const maxRetries = 5;
-
-    while (retries < maxRetries) {
-      response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}`,
-        },
-      });
-
-     if (response.status === 429) {
-        retries++;
-        // Read the body to see what Airtable is specifically complaining about
-        const errorBody = await response.text();
-        console.warn(`[429 Body]: ${errorBody}`);
-
-        const retryAfterHeader = response.headers.get('retry-after');
-        const waitTime = retryAfterHeader 
-          ? parseInt(retryAfterHeader, 10) * 1000 
-          : Math.pow(2, retries) * 2500;
-
-        console.warn(`[429] Rate limited on table ${tableId}. Waiting ${waitTime / 1000}s... (Attempt ${retries}/${maxRetries})`);
-        await sleep(waitTime);
-      }
-    }
+    // You no longer need to pass the Authorization header here; 
+    // the Cloudflare Worker attaches it safely on the server side!
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch ${tableId}: ${response.status} ${response.statusText}`);
