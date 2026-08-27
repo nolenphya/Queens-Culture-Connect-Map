@@ -2,14 +2,9 @@ name: Sync Airtable Data
 
 on:
   schedule:
-    # Runs automatically every 6 hours
-    - cron: '0 */6 * * *'
-  # Allows you to click "Run workflow" manually in GitHub anytime
+    # Runs hourly to keep signed image URLs fresh
+    - cron: '0 * * * *'
   workflow_dispatch:
-  # Triggers on code pushes
-  push:
-    branches:
-      - main
 
 jobs:
   build:
@@ -33,4 +28,4 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add data/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update map datasets" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-refresh map datasets and attachment tokens" && git push)
