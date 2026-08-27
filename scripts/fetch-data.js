@@ -47,7 +47,7 @@ async function run() {
     // Format artists safely
     const formattedArtists = artists
       .map((r) => r.fields)
-      .filter((f) => f && (f["Artist Name"] || f["Name"]))
+      .filter((f) => f && (f["Full Name"] || f["Artist Display Name"]))
       .map((f) => ({
         ...f,
         Latitude: f.Latitude ? parseFloat(f.Latitude) : null,
