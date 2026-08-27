@@ -1,30 +1,25 @@
 const fs = require('fs');
 const path = require('path');
 
-// Base ID hardcoded or pulled from environment
 const BASE_ID = process.env.AIRTABLE_BASE_ID || 'appirTxnn4ahpwSuk';
 
 const ORGS_TABLE = 'tblgqyoE5TZUzQDKw';
 const ARTISTS_TABLE = 'tbl9OiPT8QI8ss20e';
 
-// Helper delay function
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fetchAllRecords(tableId) {
   let records = [];
   let offset = null;
 
-  // Clean Worker URL (fixed typo)
   const PROXY_URL = "https://airtable-proxy.nolen-scruggs.workers.dev";
 
   do {
-    // Uses BASE_ID variable
     let url = `${PROXY_URL}/v0/${BASE_ID}/${tableId}`;
     if (offset) {
       url += `?offset=${offset}`;
     }
 
-    // No Authorization header needed—Cloudflare attaches it safely!
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -46,18 +41,18 @@ async function run() {
     const orgs = await fetchAllRecords(ORGS_TABLE);
     
     console.log("Fetching Artists...");
-    await sleep(500); // Brief pause between table fetches
+    await sleep(500);
     const artists = await fetchAllRecords(ARTISTS_TABLE);
 
-    // Format artists data to match your existing frontend expectations
+    // Format artists safely
     const formattedArtists = artists
       .map((r) => r.fields)
-      .filter((f) => f && f["Artist Name"])
+      .filter((f) => f && (f["Artist Name"] || f["Name"]))
       .map((f) => ({
         ...f,
-        Latitude: parseFloat(f.Latitude),
-        Longitude: parseFloat(f.Longitude),
-        NTA: f["NTA Code"] || f.NTA || "",
+        Latitude: f.Latitude ? parseFloat(f.Latitude) : null,
+        Longitude: f.Longitude ? parseFloat(f.Longitude) : null,
+        NTA: f["NTA Code"] || f.NTA || f.NTA_Map || "",
       }));
 
     // Format orgs data
@@ -66,19 +61,19 @@ async function run() {
       ...r.fields
     }));
 
-    // Ensure 'data' folder exists
+    // Ensure 'data' directory exists relative to project root
     const dataDir = path.join(__dirname, '..', 'data');
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
 
-    // Save JSON files
+    // Write both files
     fs.writeFileSync(path.join(dataDir, 'orgs.json'), JSON.stringify(formattedOrgs, null, 2));
     fs.writeFileSync(path.join(dataDir, 'artists.json'), JSON.stringify(formattedArtists, null, 2));
 
-    console.log(`Successfully updated data! (${formattedOrgs.length} orgs, ${formattedArtists.length} artists)`);
+    console.log(`✅ Successfully updated data files! Saved ${formattedOrgs.length} orgs to data/orgs.json and ${formattedArtists.length} artists to data/artists.json`);
   } catch (error) {
-    console.error("Error during sync:", error);
+    console.error("❌ Error during sync:", error);
     process.exit(1);
   }
 }
