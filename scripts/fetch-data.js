@@ -8,8 +8,6 @@ const ARTISTS_TABLE = 'tbl9OiPT8QI8ss20e';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// In scripts/fetch-data.js, update fetchAllRecords or add filter parameter:
-
 async function fetchAllRecords(tableId, filterFormula = '') {
   let records = [];
   let offset = null;
@@ -42,18 +40,15 @@ async function fetchAllRecords(tableId, filterFormula = '') {
   return records;
 }
 
-// Then in your run() function:
-console.log("Fetching Organizations...");
-// Adjust '{Status} = "Approved"' to match your exact column name & option in Airtable
-const orgs = await fetchAllRecords(ORGS_TABLE, '{Status} = "Approved"');
 async function run() {
   try {
-    console.log("Fetching Organizations...");
-    const orgs = await fetchAllRecords(ORGS_TABLE);
+    console.log("Fetching Approved Organizations...");
+    // Adjust '{Status} = "Approved"' to match your exact column name in Airtable if different
+    const orgs = await fetchAllRecords(ORGS_TABLE, '{Status} = "Approved"');
     
-    console.log("Fetching Artists...");
+    console.log("Fetching Approved Artists...");
     await sleep(500);
-    const artists = await fetchAllRecords(ARTISTS_TABLE);
+    const artists = await fetchAllRecords(ARTISTS_TABLE, '{Status} = "Approved"');
 
     // Format artists safely
     const formattedArtists = artists
@@ -63,7 +58,7 @@ async function run() {
         ...f,
         Latitude: f.Latitude ? parseFloat(f.Latitude) : null,
         Longitude: f.Longitude ? parseFloat(f.Longitude) : null,
-        NTA: f["NTA Code"] || f.NTA || f.NTA_Map || "",
+        NTA: f["NTA Code"] || f.NTA || f.NTA_Map || f["NTA_Lookup"] || "",
       }));
 
     // Format orgs data
@@ -78,7 +73,7 @@ async function run() {
       fs.mkdirSync(dataDir, { recursive: true });
     }
 
-    // Write both files
+    // Write static JSON files
     fs.writeFileSync(path.join(dataDir, 'orgs.json'), JSON.stringify(formattedOrgs, null, 2));
     fs.writeFileSync(path.join(dataDir, 'artists.json'), JSON.stringify(formattedArtists, null, 2));
 
@@ -88,6 +83,5 @@ async function run() {
     process.exit(1);
   }
 }
-
 
 run();
