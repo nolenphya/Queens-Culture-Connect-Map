@@ -44,11 +44,11 @@ async function run() {
   try {
     console.log("Fetching Approved Organizations...");
     // Adjust '{Status} = "Approved"' to match your exact column name in Airtable if different
-    const orgs = await fetchAllRecords(ORGS_TABLE, '{Status} = "Approved"');
+    const orgs = await fetchAllRecords(ORGS_TABLE, '{Approved} = "Approved"');
     
     console.log("Fetching Approved Artists...");
     await sleep(500);
-    const artists = await fetchAllRecords(ARTISTS_TABLE, '{Status} = "Approved"');
+    const artists = await fetchAllRecords(ARTISTS_TABLE, '{Approved} = "Approved"');
 
     // Format artists safely
     const formattedArtists = artists
