@@ -226,189 +226,98 @@ async function fetchArtistData() {
 // =====================================================
 
 function createMarkers(data) {
-
   allMarkers.forEach(m => m.remove());
-
   allMarkers = [];
-
   organizationTagGroups = {};
 
   data.forEach(row => {
+    const lat = parseFloat(row.Latitude);
+    const lng = parseFloat(row.Longitude);
 
-    const lat =
-      parseFloat(row.Latitude);
+    if (isNaN(lat) || isNaN(lng)) return;
 
-    const lng =
-      parseFloat(row.Longitude);
+    const tags = (row.Tags || '')
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
 
-    if (isNaN(lat) || isNaN(lng)) {
-      return;
-    }
+    const primaryTag = tags[0] || 'Uncategorized';
+    const iconKey = iconMap[primaryTag] || 'default';
 
-    const tags =
-      (row.Tags || '')
-        .split(',')
-        .map(t => t.trim())
-        .filter(Boolean);
-
-    const primaryTag =
-      tags[0] || 'Uncategorized';
-
-    const iconKey =
-      iconMap[primaryTag] || 'default';
-
-    const el =
-      document.createElement('div');
-
-
-    el.style.backgroundColor = '#007bff';
+    const el = document.createElement('div');
+    el.className = 'custom-org-marker';
+    el.style.backgroundColor = tagColors[primaryTag] || '#666';
+    el.style.width = '36px';
+    el.style.height = '36px';
     el.style.borderRadius = '50%';
+    el.style.border = '2px solid white';
+    el.style.boxShadow = '0 1px 4px rgba(0,0,0,0.35)';
+    el.style.position = 'relative';
+    el.style.cursor = 'pointer';
+    el.style.transition = 'transform .18s ease, filter .18s ease';
 
-   const img = document.createElement('img');
+    const img = document.createElement('img');
+    img.src = `icons/${iconKey}.png`;
+    img.style.width = '20px';
+    img.style.height = '20px';
+    img.style.position = 'absolute';
+    img.style.top = '50%';
+    img.style.left = '50%';
+    img.style.transform = 'translate(-50%, -50%)';
+    img.style.pointerEvents = 'none';
+    el.appendChild(img);
 
-img.src = `icons/${iconKey}.png`;
+    el.addEventListener('mouseenter', () => {
+      el.style.transform = 'translateY(-4px) scale(1.18)';
+      el.style.filter = 'drop-shadow(0 8px 18px rgba(0,0,0,.25))';
+      el.style.zIndex = '999';
+    });
 
-img.style.width = '20px';
-img.style.height = '20px';
+    el.addEventListener('mouseleave', () => {
+      el.style.transform = 'translateY(0) scale(1)';
+      el.style.filter = 'none';
+      el.style.zIndex = '';
+    });
 
-img.style.position = 'absolute';
-img.style.top = '50%';
-img.style.left = '50%';
-img.style.transform =
-  'translate(-50%, -50%)';
+    el.style.display = organizationsVisible ? 'block' : 'none';
 
-img.style.pointerEvents = 'none';
-
-el.appendChild(img);
-
-  el.style.backgroundColor =
-  tagColors[primaryTag] || '#444';
-
-el.style.width = '36px';
-el.style.height = '36px';
-el.style.borderRadius = '50%';
-
-el.style.backgroundColor =
-  tagColors[primaryTag] || '#666';
-
-el.style.border = '2px solid white';
-
-el.style.boxShadow =
-  '0 1px 4px rgba(0,0,0,0.35)';
-
-   // el.addEventListener('click', (event) => {
- // event.stopPropagation();
-//});
-
-el.style.transition =
-    "transform .18s ease, filter .18s ease";
-
-el.addEventListener('mouseenter', () => {
-
-    el.style.transform =
-        'translateY(-4px) scale(1.18)';
-
-    el.style.filter =
-        'drop-shadow(0 8px 18px rgba(0,0,0,.25))';
-
-    el.style.zIndex = 999;
-
-});
-
-el.addEventListener('mouseleave', () => {
-
-    el.style.transform =
-        'translateY(0) scale(1)';
-
-    el.style.filter = 'none';
-
-    el.style.zIndex = '';
-
-});
-
-    el.style.display =
-  organizationsVisible
-    ? 'block'
-    : 'none';
-
-    const label =
-      document.createElement('div');
-
+    const label = document.createElement('div');
     label.className = 'marker-label';
-
-    label.innerText =
-      row["Org Name"] || "Unnamed";
-
+    label.innerText = row["Org Name"] || "Unnamed";
     label.style.display = 'none';
     label.style.pointerEvents = 'none';
     el.appendChild(label);
 
- const orgLink =
-  `${ORG_PROFILE_URL}?recordId=${row.id}`;
-  
+    const orgLink = `${ORG_PROFILE_URL}?recordId=${row.id}`;
     const imageUrl = Array.isArray(row.Image) && row.Image.length > 0 ? row.Image[0].url : '';
 
+    const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+      <div style="max-width:250px;">
+        ${imageUrl ? `<img src="${imageUrl}" style="width:100%;margin-bottom:10px;">` : ''}
+        <h3>${row["Org Name"] || 'Untitled'}</h3>
+        ${row.Tagline ? `<p>${row.Tagline}</p>` : ''}
+        ${row.Address ? `<p><b>Address:</b><br>${row.Address}</p>` : ''}
+        <p style="margin-top:10px;">
+          <a href="${orgLink}" target="_blank">View Organization Profile</a>
+        </p>
+      </div>
+    `);
 
-const popup = new mapboxgl.Popup({ offset: 25 })
-  .setHTML(`
-    <div style="max-width:250px;">
-
-      ${
-        imageUrl
-          ? `<img src="${imageUrl}" style="width:100%;margin-bottom:10px;">`
-          : ''
-      }
-
-      <h3>${row["Org Name"] || 'Untitled'}</h3>
-
-      ${
-        row.Tagline
-          ? `<p>${row.Tagline}</p>`
-          : ''
-      }
-
-      ${
-        row.Address
-          ? `<p><b>Address:</b><br>${row.Address}</p>`
-          : ''
-      }
-
-      <p style="margin-top:10px;">
-        <a
-          href="${orgLink}"
-          target="_blank"
-        >
-          View Organization Profile
-        </a>
-      </p>
-
-    </div>
-  `);
-
-    const marker =
-  new mapboxgl.Marker(el)
-    .setLngLat([lng, lat])
-    .setPopup(popup)
-    .addTo(map);
-
-el.addEventListener('click', () => {
-  //console.log('MARKER CLICK:', row["Org Name"]);
-  marker.togglePopup();
-});
+    // Attach Marker to Map with standard Popup bindings
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat([lng, lat])
+      .setPopup(popup)
+      .addTo(map);
 
     marker.rowData = row;
     marker.labelElement = label;
-
     allMarkers.push(marker);
 
     tags.forEach(tag => {
-
       if (!organizationTagGroups[tag]) {
         organizationTagGroups[tag] = [];
       }
-
-      organizationTagGroups[tag]
-        .push(marker);
+      organizationTagGroups[tag].push(marker);
     });
   });
 }
