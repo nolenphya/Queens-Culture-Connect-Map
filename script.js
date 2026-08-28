@@ -329,10 +329,7 @@ function createMarkers(data) {
 async function loadArtistLayer() {
   const artists = await fetchArtistData();
 
-  // Reset counts
-  Object.keys(neighborhoodCounts).forEach(key => {
-    delete neighborhoodCounts[key];
-  });
+  Object.keys(neighborhoodCounts).forEach(key => delete neighborhoodCounts[key]);
 
   artists.forEach(artist => {
     let nta = artist.NTA || artist.NTA_Map;
@@ -347,34 +344,30 @@ async function loadArtistLayer() {
   const geojson = await response.json();
 
   const uniqueNTAs = new Set();
-  visibleNeighborhoods.clear(); // Clear previous state
+  visibleNeighborhoods.clear();
 
   geojson.features.forEach((feature, index) => {
-    feature.id = index; // Unique ID for feature-state hover logic
+    feature.id = index;
 
-    // Check multiple casing variants for NTA name in GeoJSON properties
     const nta = (
       feature.properties.ntaname || 
       feature.properties.NTAName || 
       feature.properties.NTA || 
       ''
     ).trim();
-    
+
     if (!nta) return;
 
-    // Standardize property name so Mapbox expressions match reliably
     feature.properties.ntaname = nta;
-    
     const count = neighborhoodCounts[nta] || 0;
     feature.properties.artist_count = count;
 
     uniqueNTAs.add(nta);
-    visibleNeighborhoods.add(nta); // ✅ Populate visible set by default!
+    visibleNeighborhoods.add(nta);
   });
 
   artistNeighborhoodList = Array.from(uniqueNTAs).sort();
 
-  // Set source data
   if (!map.getSource('artists-nta')) {
     map.addSource('artists-nta', {
       type: 'geojson',
@@ -384,46 +377,45 @@ async function loadArtistLayer() {
     map.getSource('artists-nta').setData(geojson);
   }
 
-  // Clear any leftover filters initially so all filled polygons render
-  if (map.getLayer('artist-fill-layer')) {
-    map.setFilter('artist-fill-layer', null);
-    map.setFilter('artist-outline-layer', null);
-  } else {
-    map.addLayer({
-      id: 'artist-fill-layer',
-      type: 'fill',
-      source: 'artists-nta',
-      paint: {
-        'fill-color': [
-          'interpolate',
-          ['linear'],
-          ['get', 'artist_count'],
-          0,  '#ffffff',
-          1,  '#f0f0f0',
-          3,  '#d9d9d9',
-          5,  '#bdbdbd',
-          8,  '#969696',
-          12, '#737373',
-          16, '#525252',
-          20, '#252525',
-          30, '#000000'
-        ],
-        'fill-opacity': [
-          'case',
-          ['boolean', ['feature-state', 'hover'], false],
-          0.95,
-          0.45
-        ]
-      }
-    });
+  // Insert layer before labels if possible so boundaries don't cover text
+  const layers = map.getStyle().layers;
+  let firstLabelId;
+  for (const layer of layers) {
+    if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+      firstLabelId = layer.id;
+      break;
+    }
   }
 
-  // Ensure initial visibility is explicitly set
-  map.setLayoutProperty('artist-fill-layer', 'visibility', artistsVisible ? 'visible' : 'none');
-  
-  // (Keep hover & popup listeners unchanged...)
+  if (!map.getLayer('artist-fill-layer')) {
+    map.addLayer(
+      {
+        id: 'artist-fill-layer',
+        type: 'fill',
+        source: 'artists-nta',
+        layout: {
+          visibility: artistsVisible ? 'visible' : 'none'
+        },
+        paint: {
+          'fill-color': [
+            'interpolate',
+            ['linear'],
+            ['get', 'artist_count'],
+            0, '#ffffff',
+            1, '#e0f3f8',
+            5, '#99d594',
+            10, '#e6f598',
+            15, '#fee08b',
+            20, '#fc8d59',
+            30, '#d53e4f'
+          ],
+          'fill-opacity': 0.6
+        }
+      },
+      firstLabelId
+    );
+  }
 }
-
 // =====================================================
 // SUBWAY LAYERS
 // =====================================================
@@ -539,7 +531,7 @@ function createLegendSection(title) {
 
   const arrow = document.createElement('span');
   arrow.className = 'legend-arrow';
-  arrow.textContent = '▼'; // Default to down arrow
+  arrow.textContent = '▼';
 
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
@@ -549,11 +541,7 @@ function createLegendSection(title) {
   label.textContent = title;
 
   const content = document.createElement('div');
-  // Start collapsed natively by max-height rather than display:none
   content.className = 'legend-section-content';
-  content.style.maxHeight = 'none'; 
-  content.style.overflow = 'hidden';
-  content.style.transition = 'max-height 0.35s ease';
 
   header.appendChild(arrow);
   header.appendChild(checkbox);
@@ -562,35 +550,20 @@ function createLegendSection(title) {
   section.appendChild(content);
 
   header.addEventListener('click', e => {
-    // Prevent collapsing the accordion if the user just clicked the checkbox
-    if (e.target.tagName.toLowerCase() === 'input') {
-      return;
-    }
+    if (e.target.tagName.toLowerCase() === 'input') return;
 
-    const isCollapsed = content.style.maxHeight === '0px' || content.style.maxHeight === '';
-    
+    const isCollapsed = content.style.display === 'none';
     if (isCollapsed) {
+      content.style.display = 'block';
       arrow.textContent = '▼';
-      content.style.maxHeight = content.scrollHeight + "px";
-      // Handle variable height if inner sub-menus open later
-      setTimeout(() => { content.style.maxHeight = 'none'; }, 350);
     } else {
+      content.style.display = 'none';
       arrow.textContent = '▶';
-      content.style.maxHeight = content.scrollHeight + "px";
-      reflow(); // force layout calculation
-      content.style.maxHeight = "0px";
     }
   });
 
-  function reflow() { content.offsetHeight; }
-
-  return {
-    section,
-    content,
-    checkbox
-  };
+  return { section, content, checkbox };
 }
-
 // =====================================================
 // BUILD LEGEND
 // =====================================================
@@ -610,57 +583,43 @@ console.log(
 // =====================================================
 
 function buildCombinedLegend() {
-  const legend =
-    document.getElementById("legend-content");
+  const legend = document.getElementById("legend-content");
+  if (!legend) return;
 
-legend.innerHTML = "";
+  legend.innerHTML = "";
 
-const title = document.createElement("div");
-title.className = "layers-title";
-
-title.innerHTML = `
-    <span>☰</span>
-    <span>Layers</span>
-`;
-
-legend.appendChild(title);
+  const title = document.createElement("div");
+  title.className = "layers-title";
+  title.innerHTML = `<span>☰</span> <span>Layers</span>`;
+  legend.appendChild(title);
 
   // =====================================================
   // ORGANIZATIONS SECTION
   // =====================================================
   const orgCount = allMarkers.length;
-
-const organizationsSection =
-    createLegendSection(
-        `Organizations (${orgCount})`
-    );
+  const organizationsSection = createLegendSection(`Organizations (${orgCount})`);
   legend.appendChild(organizationsSection.section);
 
-  // Sync the master toggle state
   organizationsSection.checkbox.checked = organizationsVisible;
 
   organizationsSection.checkbox.addEventListener('change', e => {
     organizationsVisible = e.target.checked;
 
-    // 1. Forcefully update all nested item checkboxes in the DOM
     organizationsSection.content.querySelectorAll('input[type="checkbox"]').forEach(cb => {
       cb.checked = organizationsVisible;
     });
 
-    // 2. Map marker visibility toggle
     allMarkers.forEach(marker => {
       marker.getElement().style.display = organizationsVisible ? 'block' : 'none';
     });
   });
- 
 
-  // Populate organization items
- // Populate organization items
   Object.entries(organizationTagGroups)
     .sort(([a], [b]) => a.localeCompare(b))
     .forEach(([tag, markers]) => {
       const category = document.createElement('div');
       const header = document.createElement('div');
+      header.className = 'legend-category-header';
 
       const leftContainer = document.createElement('div');
       leftContainer.style.display = 'flex';
@@ -687,15 +646,13 @@ const organizationsSection =
       header.appendChild(leftContainer);
       header.appendChild(arrowSpan);
 
-      header.className = 'legend-category-header';
-
       const list = document.createElement('ul');
       list.style.display = 'none';
 
       header.addEventListener('click', () => {
         const collapsed = list.style.display === 'none';
         list.style.display = collapsed ? 'block' : 'none';
-        header.querySelector('.arrow').textContent = collapsed ? '▾' : '▸';
+        arrowSpan.textContent = collapsed ? '▾' : '▸';
       });
 
       markers.forEach(marker => {
@@ -709,7 +666,7 @@ const organizationsSection =
         });
 
         const label = document.createElement('span');
-        label.textContent = marker.rowData["Org Name"];
+        label.textContent = marker.rowData["Org Name"] || "Unnamed Org";
         label.className = 'legend-link';
 
         label.addEventListener('click', () => {
@@ -733,53 +690,33 @@ const organizationsSection =
   // =====================================================
   // ARTISTS SECTION
   // =====================================================
-const artistTotal =
-    Object.values(neighborhoodCounts)
-        .reduce(
-            (a,b)=>a+b,
-            0
-        );
-
-const artistsSection =
-    createLegendSection(
-        `Artists (${artistTotal})`
-    );
+  const artistTotal = Object.values(neighborhoodCounts).reduce((a, b) => a + b, 0);
+  const artistsSection = createLegendSection(`Artists (${artistTotal})`);
   legend.appendChild(artistsSection.section);
 
-  // Sync the master toggle state safely now that it is declared
   artistsSection.checkbox.checked = artistsVisible;
 
-artistsSection.checkbox.addEventListener('change', e => {
+  artistsSection.checkbox.addEventListener('change', e => {
     artistsVisible = e.target.checked;
 
-    // 1. Synchronize nested neighborhood UI checkboxes visually
     artistsSection.content.querySelectorAll('input[type="checkbox"]').forEach(cb => {
       cb.checked = artistsVisible;
     });
 
-    // 2. Switch layer visibility
     const visibility = artistsVisible ? 'visible' : 'none';
     if (map.getLayer('artist-fill-layer')) {
       map.setLayoutProperty('artist-fill-layer', 'visibility', visibility);
     }
-    if (map.getLayer('artist-outline-layer')) {
-      map.setLayoutProperty('artist-outline-layer', 'visibility', visibility);
-    }
 
-    /* ==========================================================
-       TOGGLE CHOROPLETH LEGEND DYNAMICALLY
-       ========================================================== */
     const legendEl = document.querySelector('.choropleth-legend');
     if (legendEl) {
       legendEl.style.display = artistsVisible ? 'flex' : 'none';
     }
   });
 
-  // Populate artist neighborhood filters
- // Populate artist neighborhood filters
- // Populate artist neighborhood filters (Unique list)
+  // Populate Neighborhood Items
   artistNeighborhoodList
-    .filter(neighborhood => (neighborhoodCounts[neighborhood] || 0) > 0) // Keeps UI clean (only shows neighborhoods with artists)
+    .filter(neighborhood => (neighborhoodCounts[neighborhood] || 0) > 0)
     .forEach(neighborhood => {
       const row = document.createElement('div');
       row.className = 'legend-item-row';
@@ -802,15 +739,10 @@ artistsSection.checkbox.addEventListener('change', e => {
       labelLink.style.marginLeft = '4px';
       labelLink.innerHTML = `${neighborhood} <span class="legend-count">(${neighborhoodCounts[neighborhood] || 0})</span>`;
 
-      // Click to fly/zoom straight to the neighborhood boundary
-     // Click to fly/zoom straight to the neighborhood boundary and open its popup
+      // Corrected map.querySourceFeatures without sourceLayer parameter
       labelLink.addEventListener('click', () => {
-        // Query the underlying source so it works even if the polygon is off-screen
-        const sourceFeatures = map.querySourceFeatures('artists-nta', {
-          sourceLayer: 'artist-fill-layer'
-        });
+        const sourceFeatures = map.querySourceFeatures('artists-nta');
 
-        // Find the feature matching the clicked neighborhood
         const match = sourceFeatures.find(
           f => f.properties.ntaname?.trim() === neighborhood
         );
@@ -818,7 +750,6 @@ artistsSection.checkbox.addEventListener('change', e => {
         if (match) {
           const bounds = new mapboxgl.LngLatBounds();
 
-          // Calculate bounding box across Polygon or MultiPolygon geometries
           if (match.geometry.type === 'Polygon') {
             match.geometry.coordinates[0].forEach(coord => bounds.extend(coord));
           } else if (match.geometry.type === 'MultiPolygon') {
@@ -829,14 +760,12 @@ artistsSection.checkbox.addEventListener('change', e => {
 
           const center = bounds.getCenter();
 
-          // Smoothly fly to the neighborhood
           map.fitBounds(bounds, {
             padding: 80,
             maxZoom: 14,
             duration: 1200
           });
 
-          // Open popup at the center of the neighborhood
           const name = match.properties.ntaname;
           const count = match.properties.artist_count || 0;
           const filterLink = `${ARTIST_DIRECTORY_URL}?filter-by-Neighborhood_Lookup=${encodeURIComponent(name)}`;
@@ -849,11 +778,7 @@ artistsSection.checkbox.addEventListener('change', e => {
                 <p style="margin-bottom: 10px; color: #48484a; font-size: 13px;">
                   ${count} artist${count === 1 ? '' : 's'}
                 </p>
-                <a
-                  href="${filterLink}"
-                  target="_blank"
-                  style="color: #0071e3; font-weight: 600; text-decoration: none; font-size: 13px;"
-                >
+                <a href="${filterLink}" target="_blank" style="color: #0071e3; font-weight: 600; text-decoration: none; font-size: 13px;">
                   View Artists
                 </a>
               </div>
@@ -867,7 +792,6 @@ artistsSection.checkbox.addEventListener('change', e => {
       artistsSection.content.appendChild(row);
     });
 }
-
 // =====================================================
 // FILTER ARTISTS
 // =====================================================
@@ -1051,16 +975,17 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Close interactive bottom card on mobile when user repositions map
-map.on("click", () => {
-    if (window.innerWidth < 768) {
+map.on("click", (e) => {
+    // Only close mobile sidebar if the user clicked directly on the map background, not a marker/popup
+    if (e.originalEvent.target.tagName === 'CANVAS' && window.innerWidth < 768) {
         const sidebar = document.getElementById("sidebar");
         const sidebarToggle = document.getElementById("sidebar-toggle");
         if (sidebar && !sidebar.classList.contains("collapsed")) {
             sidebar.classList.add("collapsed");
-            sidebarToggle.innerHTML = "☰";
+            if (sidebarToggle) sidebarToggle.innerHTML = "☰";
         }
     }
-});
+});s
 
 
 
