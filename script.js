@@ -12,128 +12,95 @@ const map = new mapboxgl.Map({
   zoom: 11
 });
 
-//Add Navigation control
+// Add Navigation control
 map.addControl(
-  new mapboxgl.NavigationControl({
-    showCompass: true
-  }),
+  new mapboxgl.NavigationControl({ showCompass: true }),
   'top-right'
 );
 
-// Add Geolocate/Self-Locate Control
+// Add Geolocate Control
 map.addControl(
   new mapboxgl.GeolocateControl({
-    positionOptions: {
-      enableHighAccuracy: true
-    },
+    positionOptions: { enableHighAccuracy: true },
     trackUserLocation: true,
     showUserHeading: true
   }),
   'top-right'
 );
 
-
-// Smooth zooming
-
+// Smooth zooming & drag settings
 map.scrollZoom.setWheelZoomRate(1 / 450);
 map.scrollZoom.setZoomRate(1 / 150);
-
-// smoother feel
-
 map.dragPan.enable();
 map.touchZoomRotate.enable();
 
+// Global Application State
 let allMarkers = [];
-
 let organizationsVisible = true;
 let artistsVisible = true;
-
 let organizationTagGroups = {};
-
 const neighborhoodCounts = {};
-
-let visibleNeighborhoods =
-  new Set();
-
+let visibleNeighborhoods = new Set();
 let artistNeighborhoodList = [];
 
-let hoveredNtaId = null;
-
-const BASE_SOFTR_DIRECTORY =
-  "https://elwanda52071.softr.app";
-
-const ORG_PROFILE_URL =
-  `${BASE_SOFTR_DIRECTORY}/organization-details`;
-
-const ARTIST_DIRECTORY_URL =
-  `${BASE_SOFTR_DIRECTORY}/artists`;
+const BASE_SOFTR_DIRECTORY = "https://elwanda52071.softr.app";
+const ORG_PROFILE_URL = `${BASE_SOFTR_DIRECTORY}/organization-details`;
+const ARTIST_DIRECTORY_URL = `${BASE_SOFTR_DIRECTORY}/artists`;
 
 // =====================================================
 // ZIP → NTA LOOKUP
 // =====================================================
 
 const zipToNeighborhood = {
-
   "11101": "Long Island City-Hunters Point",
   "11102": "Old Astoria",
   "11103": "Astoria",
   "11104": "Astoria",
   "11105": "Astoria",
   "11106": "Old Astoria",
-
   "11354": "Downtown Flushing",
   "11355": "Downtown Flushing",
   "11358": "Queensboro Hill",
   "11361": "Bayside-Bayside Hills",
   "11362": "Douglaston-Little Neck",
   "11363": "Douglaston-Little Neck",
-
   "11364": "Oakland Gardens",
   "11365": "Fresh Meadows-Utopia",
   "11366": "Fresh Meadows-Utopia",
   "11367": "Pomonok-Flushing Heights-Hillcrest",
-
   "11368": "Corona",
   "11369": "East Elmhurst",
   "11370": "Astoria",
-
   "11372": "Jackson Heights",
   "11373": "Elmhurst",
   "11374": "Rego Park",
   "11375": "Forest Hills",
-
   "11377": "Woodside",
   "11378": "Maspeth",
   "11379": "Middle Village",
   "11385": "Ridgewood",
-
   "11411": "Cambria Heights",
   "11412": "St. Albans",
   "11413": "Springfield Gardens North",
   "11414": "Howard Beach",
   "11415": "Kew Gardens",
-
   "11416": "Ozone Park",
   "11417": "Ozone Park",
   "11418": "Richmond Hill",
   "11419": "South Richmond Hill",
   "11420": "South Ozone Park",
-
   "11421": "Woodhaven",
   "11422": "Rosedale",
   "11423": "Hollis",
   "11426": "Bellerose",
-
   "11427": "Queens Village",
   "11428": "Queens Village",
   "11429": "Queens Village",
-
   "11432": "Jamaica",
   "11433": "Jamaica",
   "11434": "Jamaica",
   "11435": "Jamaica",
   "11436": "South Jamaica",
-
   "11691": "Far Rockaway",
   "11692": "Hammels-Arverne-Edgemere",
   "11693": "Broad Channel",
@@ -142,7 +109,7 @@ const zipToNeighborhood = {
 };
 
 // =====================================================
-// ICONS
+// ICONS & TAG COLORS
 // =====================================================
 
 const iconMap = {
@@ -160,66 +127,46 @@ const iconMap = {
   'Historical Society-Preservation Group': 'archive'
 };
 
-  const tagColors = {
-
-  // Blue (A/C/E)
+const tagColors = {
   'Gallery': '#0039A6',
-  // Orange (B/D/F/M)
   'Museum/Cultural Institution': '#FF6319',
-  // Yellow (N/Q/R/W)
   'Music Group/Vocal Ensembles': '#FCCC0A',
-  // Green (4/5/6)
   'Community Garden': '#00933C',
-  // Red (1/2/3)
   'Theatre': '#EE352E',
-  // Purple (7)
   'Dance Company': '#B933AD',
-  // Teal (custom, complements MTA palette)
   'Art Center-Studio': '#00A9B7',
-  // Dark Navy
   'Cultural Arts Center': '#1B365D',
-  // Brown (J/Z)
   'Historical Society-Preservation Group': '#996633',
-  // Light Green (G)
   'Community Center': '#6CBE45',
-  // Gray (L)
   'Multidisciplinary Arts Center': '#A7A9AC',
-  // Cyan (custom)
   'Video-Film Company': '#00B7C7'
 };
 
-
-
 // =====================================================
-// FETCH ORGANIZATION DATA (Static JSON)
+// DATA FETCHERS
 // =====================================================
+
 async function fetchData() {
   try {
     const res = await fetch('./data/orgs.json');
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const allRecords = await res.json();
-    return allRecords;
+    return await res.json();
   } catch (error) {
-    console.error('Failed to load static orgs data:', error);
+    console.error('Failed to load orgs.json:', error);
     return [];
   }
 }
 
-// =====================================================
-// FETCH ARTIST DATA (Static JSON)
-// =====================================================
 async function fetchArtistData() {
   try {
     const res = await fetch('./data/artists.json');
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const records = await res.json();
-    return records;
+    return await res.json();
   } catch (error) {
-    console.error('Failed to load static artist data:', error);
+    console.error('Failed to load artists.json:', error);
     return [];
   }
 }
-
 
 // =====================================================
 // CREATE ORGANIZATION MARKERS
@@ -303,7 +250,6 @@ function createMarkers(data) {
       </div>
     `);
 
-    // Attach Marker to Map with standard Popup bindings
     const marker = new mapboxgl.Marker(el)
       .setLngLat([lng, lat])
       .setPopup(popup)
@@ -377,8 +323,8 @@ async function loadArtistLayer() {
     map.getSource('artists-nta').setData(geojson);
   }
 
-  // Insert layer before labels if possible so boundaries don't cover text
-  const layers = map.getStyle().layers;
+  // Safely find label layer to render choropleth beneath
+  const layers = map.getStyle() ? map.getStyle().layers : [];
   let firstLabelId;
   for (const layer of layers) {
     if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
@@ -409,19 +355,19 @@ async function loadArtistLayer() {
             20, '#fc8d59',
             30, '#d53e4f'
           ],
-          'fill-opacity': 0.6
+          'fill-opacity': 0.65
         }
       },
       firstLabelId
     );
   }
 }
+
 // =====================================================
 // SUBWAY LAYERS
 // =====================================================
 
 function loadSubwayLayers() {
-
   map.addSource('subway-lines', {
     type: 'geojson',
     data: 'nyc-subway-routes.geojson'
@@ -431,49 +377,23 @@ function loadSubwayLayers() {
     id: 'subway-lines-layer',
     type: 'line',
     source: 'subway-lines',
-
     layout: {
       'line-join': 'round',
       'line-cap': 'round'
     },
-
     paint: {
       'line-width': 2,
-
       'line-color': [
         'match',
         ['get', 'rt_symbol'],
-
-        '1', '#EE352E',
-        '2', '#EE352E',
-        '3', '#EE352E',
-
-        '4', '#00933C',
-        '5', '#00933C',
-        '6', '#00933C',
-
-        'A', '#2850AD',
-        'C', '#2850AD',
-        'E', '#2850AD',
-
-        'B', '#FF6319',
-        'D', '#FF6319',
-        'F', '#FF6319',
-        'M', '#FF6319',
-
-        'N', '#FCCC0A',
-        'Q', '#FCCC0A',
-        'R', '#FCCC0A',
-        'W', '#FCCC0A',
-
-        'L', '#A7A9AC',
-        'G', '#6CBE45',
-
-        'J', '#996633',
-        'Z', '#996633',
-
+        '1', '#EE352E', '2', '#EE352E', '3', '#EE352E',
+        '4', '#00933C', '5', '#00933C', '6', '#00933C',
+        'A', '#2850AD', 'C', '#2850AD', 'E', '#2850AD',
+        'B', '#FF6319', 'D', '#FF6319', 'F', '#FF6319', 'M', '#FF6319',
+        'N', '#FCCC0A', 'Q', '#FCCC0A', 'R', '#FCCC0A', 'W', '#FCCC0A',
+        'L', '#A7A9AC', 'G', '#6CBE45',
+        'J', '#996633', 'Z', '#996633',
         '7', '#B933AD',
-
         '#000000'
       ]
     }
@@ -488,9 +408,8 @@ function loadSubwayLayers() {
     id: 'subway-stops-layer',
     type: 'circle',
     source: 'subway-stops',
-
     paint: {
-      'circle-radius': 1,
+      'circle-radius': 1.5,
       'circle-color': '#ffffff',
       'circle-stroke-width': 1,
       'circle-stroke-color': '#000000'
@@ -501,15 +420,13 @@ function loadSubwayLayers() {
     id: 'subway-labels-layer',
     type: 'symbol',
     source: 'subway-stops',
-
     layout: {
       'text-field': ['get', 'name'],
-      'text-size': 12,
+      'text-size': 11,
       'text-offset': [0, 1.2],
       'text-anchor': 'top',
       'visibility': 'none'
     },
-
     paint: {
       'text-color': '#000000',
       'text-halo-color': '#ffffff',
@@ -564,19 +481,6 @@ function createLegendSection(title) {
 
   return { section, content, checkbox };
 }
-// =====================================================
-// BUILD LEGEND
-// =====================================================
-
-console.log(
-  'Markers:',
-  allMarkers.length
-);
-
-console.log(
-  'Neighborhood counts:',
-  neighborhoodCounts
-);
 
 // =====================================================
 // BUILD LEGEND
@@ -593,9 +497,7 @@ function buildCombinedLegend() {
   title.innerHTML = `<span>☰</span> <span>Layers</span>`;
   legend.appendChild(title);
 
-  // =====================================================
-  // ORGANIZATIONS SECTION
-  // =====================================================
+  // Organizations Section
   const orgCount = allMarkers.length;
   const organizationsSection = createLegendSection(`Organizations (${orgCount})`);
   legend.appendChild(organizationsSection.section);
@@ -687,9 +589,7 @@ function buildCombinedLegend() {
       organizationsSection.content.appendChild(category);
     });
 
-  // =====================================================
-  // ARTISTS SECTION
-  // =====================================================
+  // Artists Section
   const artistTotal = Object.values(neighborhoodCounts).reduce((a, b) => a + b, 0);
   const artistsSection = createLegendSection(`Artists (${artistTotal})`);
   legend.appendChild(artistsSection.section);
@@ -739,7 +639,6 @@ function buildCombinedLegend() {
       labelLink.style.marginLeft = '4px';
       labelLink.innerHTML = `${neighborhood} <span class="legend-count">(${neighborhoodCounts[neighborhood] || 0})</span>`;
 
-      // Corrected map.querySourceFeatures without sourceLayer parameter
       labelLink.addEventListener('click', () => {
         const sourceFeatures = map.querySourceFeatures('artists-nta');
 
@@ -792,6 +691,7 @@ function buildCombinedLegend() {
       artistsSection.content.appendChild(row);
     });
 }
+
 // =====================================================
 // FILTER ARTISTS
 // =====================================================
@@ -799,202 +699,150 @@ function buildCombinedLegend() {
 function updateNeighborhoodFilters() {
   const selected = Array.from(visibleNeighborhoods);
 
-  // 1. If everything is checked (or nothing was unchecked yet), REMOVE filters entirely
   if (selected.length === 0 || selected.length >= artistNeighborhoodList.length) {
-    map.setFilter('artist-fill-layer', null);
-    map.setFilter('artist-outline-layer', null);
+    if (map.getLayer('artist-fill-layer')) map.setFilter('artist-fill-layer', null);
     return;
   }
 
-  // 2. Otherwise filter dynamically
   const filterExpression = ['in', ['get', 'ntaname'], ['literal', selected]];
-  map.setFilter('artist-fill-layer', filterExpression);
-  map.setFilter('artist-outline-layer', filterExpression);
+  if (map.getLayer('artist-fill-layer')) map.setFilter('artist-fill-layer', filterExpression);
 }
+
 // =====================================================
 // SEARCH
 // =====================================================
 
-// =====================================================
-// SEARCH (Supports Name & Neighborhood)
-// =====================================================
-
-document
-  .getElementById('search-input')
-  .addEventListener('input', e => {
-
-    const query =
-      e.target.value
-        .trim()
-        .toLowerCase();
-
-    const results =
-      document.getElementById(
-        'search-results'
-      );
+const searchEl = document.getElementById('search-input');
+if (searchEl) {
+  searchEl.addEventListener('input', e => {
+    const query = e.target.value.trim().toLowerCase();
+    const results = document.getElementById('search-results');
+    if (!results) return;
 
     results.innerHTML = '';
-
     if (!query) return;
 
-    const matches =
-      allMarkers.filter(marker => {
-        // 1. Get the organization name
-        const name = (marker.rowData["Org Name"] || '').toLowerCase();
+    const matches = allMarkers.filter(marker => {
+      const name = (marker.rowData["Org Name"] || '').toLowerCase();
+      const address = marker.rowData["Address"] || '';
+      const zipMatch = address.match(/\b(11\d{3})\b/);
 
-        // 2. Extract zip code from the address to determine its neighborhood
-        const address = marker.rowData["Address"] || '';
-        const zipMatch = address.match(/\b(11\d{3})\b/); // Regex to find Queens zip codes (11xxx)
-        
-        let neighborhood = '';
-        if (zipMatch && zipMatch[1]) {
-          const zip = zipMatch[1];
-          neighborhood = (zipToNeighborhood[zip] || '').toLowerCase();
-        }
+      let neighborhood = '';
+      if (zipMatch && zipMatch[1]) {
+        neighborhood = (zipToNeighborhood[zipMatch[1]] || '').toLowerCase();
+      }
 
-        // 3. Return true if the query matches either the name OR the neighborhood
-        return name.includes(query) || neighborhood.includes(query);
-      });
+      return name.includes(query) || neighborhood.includes(query);
+    });
 
     matches.forEach(marker => {
+      const div = document.createElement('div');
+      div.className = 'search-result';
+      div.textContent = marker.rowData["Org Name"];
 
-      const div =
-        document.createElement('div');
-
-      div.className =
-        'search-result';
-
-      div.textContent =
-        marker.rowData["Org Name"];
-
-      div.addEventListener(
-        'click',
-        () => {
-
-          map.flyTo({
-            center: marker.getLngLat(),
-            zoom: 15,
-            speed: .8,
-            curve: 1.45,
-            essential: true
-          });
-
-          marker.togglePopup();
-        }
-      );
+      div.addEventListener('click', () => {
+        map.flyTo({
+          center: marker.getLngLat(),
+          zoom: 15,
+          speed: .8,
+          curve: 1.45,
+          essential: true
+        });
+        marker.togglePopup();
+      });
 
       results.appendChild(div);
     });
   });
+}
 
 // =====================================================
-// ZOOM LABELS
+// ZOOM LISTENERS & MAP INTERACTION
 // =====================================================
 
 map.on('zoom', () => {
-
-  const zoom =
-    map.getZoom();
+  const zoom = map.getZoom();
 
   allMarkers.forEach(marker => {
-
-    if (!marker.labelElement) {
-      return;
+    if (marker.labelElement) {
+      marker.labelElement.style.display = zoom >= 14 && organizationsVisible ? 'block' : 'none';
     }
-
-    marker.labelElement.style.display =
-      zoom >= 14 &&
-      organizationsVisible
-        ? 'block'
-        : 'none';
   });
 
-  if (
-    map.getLayer(
-      'subway-labels-layer'
-    )
-  ) {
-
-    map.setLayoutProperty(
-      'subway-labels-layer',
-      'visibility',
-      zoom >= 14
-        ? 'visible'
-        : 'none'
-    );
+  if (map.getLayer('subway-labels-layer')) {
+    map.setLayoutProperty('subway-labels-layer', 'visibility', zoom >= 14 ? 'visible' : 'none');
   }
 });
 
-
-// =====================================================
-// PHASE 1 UI & WINDOW HANDLERS (CLEANED UP)
-// =====================================================
-
 document.addEventListener("DOMContentLoaded", () => {
-    const sidebar = document.getElementById("sidebar");
-    const sidebarToggle = document.getElementById("sidebar-toggle");
-    const searchInput = document.getElementById("search-input");
-    const infoButton = document.getElementById("info-button");
-    const closeGuide = document.getElementById("map-guide-close");
-    const guideOverlay = document.getElementById("map-guide-overlay");
+  const sidebar = document.getElementById("sidebar");
+  const sidebarToggle = document.getElementById("sidebar-toggle");
+  const searchInput = document.getElementById("search-input");
+  const infoButton = document.getElementById("info-button");
+  const closeGuide = document.getElementById("map-guide-close");
+  const guideOverlay = document.getElementById("map-guide-overlay");
 
-    // -----------------------------------------
-    // Panel Collapse / Expand Controls
-    // -----------------------------------------
+  if (sidebarToggle && sidebar) {
     sidebarToggle.addEventListener("click", () => {
-        const isCollapsed = sidebar.classList.toggle("collapsed");
-        sidebarToggle.innerHTML = isCollapsed ? "☰" : "←";
+      const isCollapsed = sidebar.classList.toggle("collapsed");
+      sidebarToggle.innerHTML = isCollapsed ? "☰" : "←";
     });
+  }
 
-    // Automatically expand card when typing in search
+  if (searchInput && sidebar && sidebarToggle) {
     searchInput.addEventListener("focus", () => {
-        if (sidebar.classList.contains("collapsed")) {
-            sidebar.classList.remove("collapsed");
-            sidebarToggle.innerHTML = "←";
-        }
+      if (sidebar.classList.contains("collapsed")) {
+        sidebar.classList.remove("collapsed");
+        sidebarToggle.innerHTML = "←";
+      }
     });
+  }
 
-    // -----------------------------------------
-    // About Guide Overlay Modal
-    // -----------------------------------------
+  if (infoButton && guideOverlay) {
     infoButton.addEventListener("click", (e) => {
-        e.stopPropagation();
-        guideOverlay.style.display = "flex";
+      e.stopPropagation();
+      guideOverlay.style.display = "flex";
     });
+  }
 
+  if (closeGuide && guideOverlay) {
     closeGuide.addEventListener("click", () => {
-        guideOverlay.style.display = "none";
+      guideOverlay.style.display = "none";
     });
+  }
 
-    // Close window if clicked on background blur environment
+  if (guideOverlay) {
     guideOverlay.addEventListener("click", (e) => {
-        if (e.target === guideOverlay) {
-            guideOverlay.style.display = "none";
-        }
+      if (e.target === guideOverlay) {
+        guideOverlay.style.display = "none";
+      }
     });
+  }
 });
 
-// Close interactive bottom card on mobile when user repositions map
+// Mobile Close Listener
 map.on("click", (e) => {
-    // Only close mobile sidebar if the user clicked directly on the map background, not a marker/popup
-    if (e.originalEvent.target.tagName === 'CANVAS' && window.innerWidth < 768) {
-        const sidebar = document.getElementById("sidebar");
-        const sidebarToggle = document.getElementById("sidebar-toggle");
-        if (sidebar && !sidebar.classList.contains("collapsed")) {
-            sidebar.classList.add("collapsed");
-            if (sidebarToggle) sidebarToggle.innerHTML = "☰";
-        }
+  if (e.originalEvent.target.tagName === 'CANVAS' && window.innerWidth < 768) {
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebar-toggle");
+    if (sidebar && !sidebar.classList.contains("collapsed")) {
+      sidebar.classList.add("collapsed");
+      if (sidebarToggle) sidebarToggle.innerHTML = "☰";
     }
-});s
+  }
+});
 
+map.on("dragstart", () => {
+  const sidebar = document.getElementById("sidebar");
+  if (sidebar && window.innerWidth < 768) {
+    sidebar.classList.add("collapsed");
+    const sidebarToggle = document.getElementById("sidebar-toggle");
+    if (sidebarToggle) sidebarToggle.innerHTML = "☰";
+  }
+});
 
-
-// Custom Mapbox Control for the Artist Density Legend
 // =====================================================
-// BOTTOM-RIGHT MAP CONTROLS
-// =====================================================
-// =====================================================
-// INITIALIZATION AND BOTTOM-RIGHT MAP CONTROLS
+// MAP INITIALIZATION
 // =====================================================
 
 class ChoroplethLegendControl {
@@ -1019,43 +867,23 @@ class ChoroplethLegendControl {
 }
 
 map.on('load', async () => {
-  // 1. Scale Control & Choropleth Legend
-  const scale = new mapboxgl.ScaleControl({
-    maxWidth: 100,
-    unit: 'imperial'
-  });
+  const scale = new mapboxgl.ScaleControl({ maxWidth: 100, unit: 'imperial' });
   map.addControl(scale, 'bottom-right');
 
   const choroplethLegend = new ChoroplethLegendControl();
   map.addControl(choroplethLegend, 'bottom-right');
 
   try {
-    // 2. Load static JSON data in parallel (lightning fast!)
     const [orgRecords] = await Promise.all([
       fetchData(),
       loadArtistLayer()
     ]);
 
-    // 3. Render Organization Markers
     createMarkers(orgRecords);
-
-    // 4. Draw subways on top
     loadSubwayLayers(); 
-
-    // 5. Build combined sidebar legend
     buildCombinedLegend();
 
   } catch (error) {
     console.error("Error loading map layers:", error);
-  }
-});
-
-// Close interactive bottom card on mobile when user repositions map
-map.on("dragstart", () => {
-  const sidebar = document.getElementById("sidebar");
-  if (sidebar && window.innerWidth < 768) {
-    sidebar.classList.add("collapsed");
-    const sidebarToggle = document.getElementById("sidebar-toggle");
-    if (sidebarToggle) sidebarToggle.innerHTML = "☰";
   }
 });
