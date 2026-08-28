@@ -465,6 +465,7 @@ async function loadArtistLayer() {
 
   artistNeighborhoodList = Array.from(uniqueNTAs).sort();
 
+  // Set source data
   if (!map.getSource('artists-nta')) {
     map.addSource('artists-nta', {
       type: 'geojson',
@@ -474,7 +475,11 @@ async function loadArtistLayer() {
     map.getSource('artists-nta').setData(geojson);
   }
 
-  if (!map.getLayer('artist-fill-layer')) {
+  // Clear any leftover filters initially so all filled polygons render
+  if (map.getLayer('artist-fill-layer')) {
+    map.setFilter('artist-fill-layer', null);
+    map.setFilter('artist-outline-layer', null);
+  } else {
     map.addLayer({
       id: 'artist-fill-layer',
       type: 'fill',
@@ -961,24 +966,18 @@ artistsSection.checkbox.addEventListener('change', e => {
 function updateNeighborhoodFilters() {
   const selected = Array.from(visibleNeighborhoods);
 
-  // If all neighborhoods are checked, remove filter completely to show everything
-  if (selected.length === artistNeighborhoodList.length) {
+  // 1. If everything is checked (or nothing was unchecked yet), REMOVE filters entirely
+  if (selected.length === 0 || selected.length >= artistNeighborhoodList.length) {
     map.setFilter('artist-fill-layer', null);
     map.setFilter('artist-outline-layer', null);
     return;
   }
 
-  if (selected.length === 0) {
-    map.setFilter('artist-fill-layer', ['==', ['get', 'ntaname'], '']);
-    map.setFilter('artist-outline-layer', ['==', ['get', 'ntaname'], '']);
-    return;
-  }
-
+  // 2. Otherwise filter dynamically
   const filterExpression = ['in', ['get', 'ntaname'], ['literal', selected]];
   map.setFilter('artist-fill-layer', filterExpression);
   map.setFilter('artist-outline-layer', filterExpression);
 }
-
 // =====================================================
 // SEARCH
 // =====================================================
